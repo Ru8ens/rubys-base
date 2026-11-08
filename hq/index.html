@@ -1,0 +1,795 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Ruby's HQ">
+<meta name="theme-color" content="#f4f4f2">
+<title>Ruby's HQ</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="icon" href="icons/icon-192.png">
+<style>
+@font-face{font-family:Inter;font-weight:400;font-display:swap;src:url(fonts/inter-latin-400-normal.woff2) format("woff2")}
+@font-face{font-family:Inter;font-weight:500;font-display:swap;src:url(fonts/inter-latin-500-normal.woff2) format("woff2")}
+@font-face{font-family:Inter;font-weight:600;font-display:swap;src:url(fonts/inter-latin-600-normal.woff2) format("woff2")}
+@font-face{font-family:Inter;font-weight:700;font-display:swap;src:url(fonts/inter-latin-700-normal.woff2) format("woff2")}
+:root{
+  --bg:#f4f4f2; --surf:#fff; --ink:#16181d; --sub:#6b6f78; --mute:#9a9ea6; --line:#ececea; --cb:#c9cac6;
+  --blue:#0a54c4; --navy:#0a3d91; --blue-soft:#eef3fb; --gold:#e0c070; --red:#d4402b; --green:#1f8a5b;
+  --arowana:#2563eb; --tfw:#0f9d8a; --grow:#d97706; --personal:#9333ea; --other:#6b7280;
+  --safe-b:env(safe-area-inset-bottom,0px); --safe-t:env(safe-area-inset-top,0px);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--ink);font-family:Inter,-apple-system,system-ui,sans-serif;-webkit-font-smoothing:antialiased;letter-spacing:-.01em}
+body{min-height:100vh;overscroll-behavior-y:none}
+button{font:inherit;color:inherit;border:0;background:none;padding:0;cursor:pointer}
+input,select,textarea{font:inherit;color:inherit}
+svg{display:block}
+.hidden{display:none!important}
+/* layout */
+#app{max-width:520px;margin:0 auto;padding:calc(var(--safe-t) + 18px) 18px calc(var(--safe-b) + 110px)}
+.top{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
+.hi{font-size:13px;color:var(--sub);font-weight:500}
+.nm{font-size:26px;font-weight:700;letter-spacing:-.025em}
+.av{width:42px;height:42px;border-radius:50%;background:var(--ink);color:#eadfbf;display:flex;align-items:center;justify-content:center;font-weight:700}
+.ptitle{font-size:28px;font-weight:700;letter-spacing:-.03em;margin:4px 0 14px}
+.back{display:flex;align-items:center;gap:4px;color:var(--blue);font-weight:600;font-size:15px;margin:2px 0 6px}
+/* platinum card */
+.plat{border-radius:22px;padding:18px 20px 16px;color:#1d2230;position:relative;overflow:hidden;
+  background:linear-gradient(125deg,#eceef0 0%,#c9ced4 22%,#f5f6f7 40%,#b8bec6 62%,#dfe2e6 80%,#aeb4bc 100%);
+  box-shadow:0 18px 30px #1d223030, inset 0 1px 0 #fff}
+.plat:after{content:"";position:absolute;inset:0;background:repeating-linear-gradient(90deg,#ffffff12 0 1px,transparent 1px 3px);pointer-events:none}
+.pl1{display:flex;justify-content:space-between;align-items:center;font-size:11px;font-weight:700;letter-spacing:.22em}
+.chipc{width:38px;height:28px;border-radius:6px;background:linear-gradient(135deg,#d9c38a,#b39552 50%,#e6d39e);box-shadow:inset 0 0 0 1px #8f763c55}
+.lbl{font-size:11.5px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;opacity:.62;margin-top:20px}
+.nw{font-size:40px;font-weight:700;letter-spacing:-.035em;line-height:1.1;margin-top:2px;font-variant-numeric:tabular-nums}
+.nw small{font-size:22px;opacity:.5;font-weight:700}
+.pl2{display:flex;justify-content:space-between;gap:10px;font-size:12.5px;font-weight:600;margin-top:12px;opacity:.78;min-height:16px}
+.plat.sm .nw{font-size:34px}
+/* sections & cards */
+.sec{display:flex;justify-content:space-between;align-items:baseline;margin:22px 4px 8px}
+.sec h2{font-size:18px;font-weight:700;letter-spacing:-.02em;margin:0}
+.sec a,.link{font-size:13.5px;font-weight:600;color:var(--blue)}
+.card{background:var(--surf);border-radius:18px;box-shadow:0 1px 2px #0000000a}
+.row{display:flex;align-items:center;gap:12px;padding:12px 14px;position:relative;min-height:56px}
+.row+.row{border-top:1px solid var(--line)}
+.tx{flex:1;min-width:0}
+.t1{font-size:15px;font-weight:600;line-height:1.3}
+.t2{font-size:12.5px;color:var(--sub);margin-top:2px;font-weight:500}
+.ib{width:36px;height:36px;border-radius:11px;display:flex;align-items:center;justify-content:center;flex:none;background:var(--blue-soft);color:var(--navy)}
+.ib.dark{background:var(--ink);color:#e9d9a8}
+.bar{position:absolute;left:0;top:12px;bottom:12px;width:3px;border-radius:3px}
+.cb{width:24px;height:24px;border-radius:8px;border:2px solid var(--cb);flex:none;display:flex;align-items:center;justify-content:center;margin-left:4px}
+.done .cb{background:var(--blue);border-color:var(--blue);color:#fff}
+.done .t1{text-decoration:line-through;color:var(--mute)}
+.pill{font-size:12.5px;font-weight:600;padding:7px 12px;border-radius:99px;background:var(--blue);color:#fff;flex:none}
+.pill.soft{background:var(--blue-soft);color:var(--blue)}
+.pill.ok{background:#e7f5ee;color:var(--green)}
+.star{color:var(--cb);padding:4px;flex:none}
+.star.on{color:var(--gold)}
+.empty{padding:16px;color:var(--sub);font-size:14px;text-align:center}
+.amt{font-weight:700;font-variant-numeric:tabular-nums;font-size:15px;text-align:right}
+.amt small{display:block;font-size:11.5px;color:var(--sub);font-weight:500}
+.red{color:var(--red)} .green{color:var(--green)}
+.note{font-size:12.5px;color:var(--sub);margin:8px 6px 0;line-height:1.45}
+/* reminders */
+.rem{display:flex;align-items:center;gap:10px;background:#fff8e6;border-radius:14px;padding:10px 12px;margin-top:10px;font-size:13.5px;font-weight:600;color:#7a5a00}
+.rem.blue{background:var(--blue-soft);color:var(--navy)}
+/* area tiles */
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.tile{background:var(--surf);border-radius:20px;padding:16px;box-shadow:0 1px 2px #0000000a;text-align:left;min-height:128px;display:flex;flex-direction:column;justify-content:space-between}
+.tile .ti{width:50px;height:50px;border-radius:15px;background:var(--blue-soft);color:var(--navy);display:flex;align-items:center;justify-content:center}
+.tile b{display:block;font-size:16px;margin-top:14px} .tile small{font-size:12.5px;color:var(--sub);font-weight:500}
+/* chips */
+.chips{display:flex;gap:8px;overflow-x:auto;padding:2px 2px 4px;margin:0 -18px;padding-left:18px;padding-right:18px;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chip{flex:none;font-size:13.5px;font-weight:600;padding:8px 14px;border-radius:99px;background:var(--surf);color:var(--sub);box-shadow:0 1px 2px #0000000d;display:flex;align-items:center;gap:6px}
+.chip.on{background:var(--ink);color:#fff}
+.dot{width:8px;height:8px;border-radius:50%}
+.seg{display:flex;background:#e8e8e5;border-radius:12px;padding:3px;gap:2px}
+.seg button{flex:1;padding:8px 6px;border-radius:9px;font-size:13.5px;font-weight:600;color:var(--sub)}
+.seg button.on{background:#fff;color:var(--ink);box-shadow:0 1px 3px #0000001a}
+/* progress */
+.prog{height:6px;background:#ececea;border-radius:6px;overflow:hidden}
+.prog i{display:block;height:100%;background:var(--blue);border-radius:6px}
+.catbar{display:flex;align-items:center;gap:10px;padding:9px 14px}
+.catbar .nmc{width:118px;font-size:13.5px;font-weight:600}
+.catbar .prog{flex:1}
+.catbar .v{width:84px;text-align:right;font-size:13.5px;font-weight:700;font-variant-numeric:tabular-nums}
+/* stats */
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.stat{background:var(--surf);border-radius:18px;padding:16px;box-shadow:0 1px 2px #0000000a}
+.stat b{font-size:32px;font-weight:700;letter-spacing:-.03em;display:block}
+.stat small{font-size:13px;color:var(--sub);font-weight:600}
+/* tab bar */
+.tab{position:fixed;left:0;right:0;bottom:0;z-index:20;background:#ffffffeb;backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-top:1px solid #e8e8e5;padding:8px 0 calc(var(--safe-b) + 8px)}
+.tabin{max-width:520px;margin:0 auto;display:flex;justify-content:space-around;align-items:center}
+.tb{display:flex;flex-direction:column;align-items:center;gap:3px;width:62px;color:var(--mute)}
+.tb small{font-size:10.5px;font-weight:600}
+.tb.on{color:var(--navy)}
+.plus{width:54px;height:54px;border-radius:17px;background:linear-gradient(160deg,var(--blue),#072a66);color:#fff;display:flex;align-items:center;justify-content:center;box-shadow:0 6px 16px #0a3d9155;margin-top:-6px}
+/* sheet */
+.scrim{display:none;position:fixed;inset:0;background:#0f141c66;z-index:40;opacity:0;transition:opacity .2s}
+.scrim.show{opacity:1}
+.sheet{position:fixed;left:0;right:0;bottom:0;z-index:41;background:var(--bg);border-radius:24px 24px 0 0;max-height:92vh;overflow:auto;padding:10px 18px calc(var(--safe-b) + 20px);transform:translateY(100%);transition:transform .25s cubic-bezier(.2,.8,.2,1);max-width:520px;margin:0 auto}
+.sheet.show{transform:none}
+.grab{width:38px;height:5px;border-radius:5px;background:#d6d6d2;margin:0 auto 12px}
+.sheet h3{font-size:20px;font-weight:700;letter-spacing:-.02em;margin:0 0 14px}
+.field{margin-bottom:12px}
+.field label{display:block;font-size:12.5px;font-weight:600;color:var(--sub);margin:0 0 6px 4px}
+.inp{width:100%;background:#fff;border:1px solid var(--line);border-radius:14px;padding:13px 14px;font-size:16px;outline:none}
+.inp:focus{border-color:var(--blue);box-shadow:0 0 0 3px #0a54c41f}
+.inp.big{font-size:36px;font-weight:700;text-align:center;letter-spacing:-.03em;padding:14px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.btn{width:100%;padding:15px;border-radius:15px;background:var(--blue);color:#fff;font-weight:700;font-size:16px;margin-top:6px}
+.btn.ghost{background:#fff;color:var(--ink);box-shadow:0 1px 2px #0000000d}
+.btn.danger{background:#fff;color:var(--red)}
+.btn.sm{padding:11px;font-size:14.5px}
+.choice{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.choice button{background:#fff;border-radius:18px;padding:18px 14px;text-align:left;box-shadow:0 1px 2px #0000000d}
+.choice b{display:block;margin-top:10px;font-size:15.5px}
+.choice small{color:var(--sub);font-size:12.5px}
+.toast{position:fixed;left:50%;bottom:calc(var(--safe-b) + 96px);transform:translate(-50%,20px);background:var(--ink);color:#fff;padding:11px 16px;border-radius:14px;font-size:14px;font-weight:600;opacity:0;transition:.25s;z-index:60;pointer-events:none;white-space:nowrap}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+/* login */
+#login{max-width:420px;margin:0 auto;padding:calc(var(--safe-t) + 60px) 24px 40px}
+#login .plat{margin:28px 0 24px}
+.msg{font-size:13.5px;color:var(--sub);margin-top:12px;min-height:18px;text-align:center}
+/* goal */
+.goal .steps{padding:0 14px 12px 14px}
+.step{display:flex;align-items:center;gap:10px;padding:8px 0;font-size:14.5px}
+.step .cb{width:22px;height:22px;margin:0}
+.step.done span{text-decoration:line-through;color:var(--mute)}
+.addstep{display:flex;gap:8px;margin-top:4px}
+.addstep input{flex:1;border:1px solid var(--line);border-radius:12px;padding:9px 12px;font-size:15px;outline:none;background:#fafaf8}
+.pct{font-size:12px;font-weight:700;color:var(--mute)}
+.state{font-size:12px;font-weight:700;padding:6px 10px;border-radius:99px;flex:none}
+.s0{background:#f0f0ed;color:var(--sub)} .s1{background:var(--blue-soft);color:var(--blue)} .s2{background:#e7f5ee;color:var(--green)}
+.copy{font-size:12px;font-weight:600;color:var(--blue);background:var(--blue-soft);padding:5px 9px;border-radius:9px}
+.streak{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:700;color:#b45309;background:#fff4e0;padding:6px 10px;border-radius:99px}
+</style>
+</head>
+<body>
+<div id="login" class="hidden">
+  <div class="nm">Ruby's HQ</div>
+  <div class="hi" style="margin-top:4px">Your life, in one place.</div>
+  <div class="plat"><div class="pl1"><span>RUBY'S HQ</span><span class="chipc"></span></div><div class="lbl">Member</div><div class="nw" style="font-size:28px">Rubén Figueira</div><div class="pl2"><span>Private</span><span>Since 2026</span></div></div>
+  <form id="loginform">
+    <div class="field"><input class="inp" id="lg-email" type="email" autocomplete="username" placeholder="Email" required></div>
+    <div class="field"><input class="inp" id="lg-pass" type="password" autocomplete="current-password" placeholder="Password" required></div>
+    <button class="btn" type="submit">Sign in</button>
+  </form>
+  <div class="note" style="text-align:center">Use the same email and password as Ruby's Base.</div>
+  <div class="msg" id="lg-msg"></div>
+</div>
+<div id="app" class="hidden"></div>
+<nav class="tab hidden" id="tab"><div class="tabin">
+  <button class="tb" data-act="tab" data-v="home"><span data-ic="home"></span><small>Home</small></button>
+  <button class="tb" data-act="tab" data-v="tasks"><span data-ic="tasks"></span><small>Tasks</small></button>
+  <button class="plus" data-act="plus" aria-label="Add"><span data-ic="plus"></span></button>
+  <button class="tb" data-act="tab" data-v="money"><span data-ic="money"></span><small>Money</small></button>
+  <button class="tb" data-act="tab" data-v="more"><span data-ic="more"></span><small>More</small></button>
+</div></nav>
+<div class="scrim" id="scrim"></div>
+<div class="sheet" id="sheet"></div>
+<div class="toast" id="toast"></div>
+<input type="file" id="file" accept=".json,application/json" class="hidden">
+<script src="../supabase.js"></script>
+<script>
+"use strict";
+// ================= Icons =================
+const IC = {
+ home:'<path d="M3 10l9-7 9 7v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>',
+ tasks:'<path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>',
+ money:'<path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/>',
+ growth:'<polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/>',
+ people:'<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
+ wish:'<rect x="3" y="8" width="18" height="4" rx="1"/><path d="M12 8v13"/><path d="M19 12v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-7"/><path d="M7.5 8a2.5 2.5 0 0 1 0-5C11 3 12 8 12 8s1-5 4.5-5a2.5 2.5 0 0 1 0 5"/>',
+ member:'<rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/>',
+ cake:'<path d="M20 21v-8a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8"/><path d="M4 16s.5-1 2-1 2.5 2 4 2 2.5-2 4-2 2.5 2 4 2 2-1 2-1"/><path d="M2 21h20"/><path d="M7 8v3M12 8v3M17 8v3"/>',
+ cal:'<rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>',
+ more:'<circle cx="5" cy="12" r="1.4"/><circle cx="12" cy="12" r="1.4"/><circle cx="19" cy="12" r="1.4"/>',
+ plus:'<path d="M12 5v14M5 12h14"/>',
+ check:'<path d="M20 6 9 17l-5-5"/>',
+ star:'<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>',
+ back:'<path d="m15 18-6-6 6-6"/>',
+ chev:'<path d="m9 18 6-6-6-6"/>',
+ trophy:'<path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6M18 9h1.5a2.5 2.5 0 0 0 0-5H18M4 22h16M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22M18 2H6v7a6 6 0 0 0 12 0V2Z"/>',
+ gear:'<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h0a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h0a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v0a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z"/>',
+ cart:'<circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/>',
+ heart:'<path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>',
+ fork:'<path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2M7 2v20M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7"/>',
+ plane:'<path d="M17.8 19.2 16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.3c.3.4.8.5 1.3.3l.5-.2c.4-.3.6-.7.5-1.2z"/>',
+ bag:'<path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18M16 10a4 4 0 0 1-8 0"/>',
+ dots:'<circle cx="12" cy="12" r="9"/><path d="M8 12h.01M12 12h.01M16 12h.01"/>',
+ bell:'<path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/>',
+ inbox:'<path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/>',
+ book:'<path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/>',
+ flame:'<path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.07-2.14 0-5.5 3-7.5.5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.15.43-2.29 1-3a2.5 2.5 0 0 0 2.5 2.5z"/>',
+};
+const ic = (n, s = 22, w = 1.9) => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round">${IC[n] || ""}</svg>`;
+const icStar = (s = 18) => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="currentColor">${IC.star}</svg>`;
+document.querySelectorAll("[data-ic]").forEach(el => el.outerHTML = ic(el.dataset.ic, el.dataset.ic === "plus" ? 26 : 23, el.dataset.ic === "plus" ? 2.4 : 1.9));
+
+// ================= Constants =================
+const PROJ = { arowana: ["Arowana", "var(--arowana)"], tfw: ["TFW", "var(--tfw)"], grow: ["GROW", "var(--grow)"], personal: ["Personal", "var(--personal)"], other: ["Other", "var(--other)"] };
+const CATS = { groceries: ["Groceries", "cart"], health: ["Health", "heart"], eat: ["Eating & going out", "fork"], transport: ["Transport & travel", "plane"], shopping: ["Shopping", "bag"], other: ["Other", "dots"] };
+const MTYPES = { air: "Airlines", hotel: "Hotels", car: "Car rental", other: "Other" };
+const CURS = ["EUR", "USD", "GBP", "CHF"];
+const SYM = { EUR: "€", USD: "$", GBP: "£", CHF: "CHF " };
+const MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+const DOW = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+
+// ================= Helpers =================
+const $ = s => document.querySelector(s);
+const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const uid = () => Math.random().toString(36).slice(2, 11);
+const pad = n => String(n).padStart(2, "0");
+const iso = d => d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate());
+const parse = s => { const [y, m, d] = s.split("-").map(Number); return new Date(y, m - 1, d); };
+const addDays = (d, n) => { const x = new Date(d); x.setDate(x.getDate() + n); return x; };
+let NOW = new Date(); let TODAY = iso(NOW);
+const ym = d => d.getFullYear() + "-" + pad(d.getMonth() + 1);
+const num = v => { if (v === "" || v == null) return null; const n = parseFloat(String(v).replace(/\s/g, "").replace(/,(\d{1,2})$/, ".$1").replace(/,/g, "")); return isFinite(n) ? n : null; };
+function money(n, cur = "EUR", opts = {}) {
+  const neg = n < 0; n = Math.abs(n || 0);
+  const s = n.toLocaleString("en-GB", { minimumFractionDigits: opts.whole ? 0 : 2, maximumFractionDigits: opts.whole ? 0 : 2 });
+  return (neg ? "−" : "") + (SYM[cur] || cur + " ") + s;
+}
+function bigMoney(n) { const s = money(n); const i = s.lastIndexOf("."); return i < 0 ? esc(s) : esc(s.slice(0, i)) + "<small>" + esc(s.slice(i)) + "</small>"; }
+function nice(ds) {
+  if (!ds) return ""; const d = parse(ds), diff = Math.round((d - parse(TODAY)) / 864e5);
+  if (diff === 0) return "Today"; if (diff === 1) return "Tomorrow"; if (diff === -1) return "Yesterday";
+  if (diff > 1 && diff < 7) return DOW[d.getDay()];
+  return d.getDate() + " " + MONTHS[d.getMonth()].slice(0, 3) + (d.getFullYear() !== NOW.getFullYear() ? " " + d.getFullYear() : "");
+}
+function toast(t) { const el = $("#toast"); el.textContent = t; el.classList.add("show"); clearTimeout(toast.t); toast.t = setTimeout(() => el.classList.remove("show"), 1800); }
+
+// ================= Storage: Supabase (private per account) + local copy =================
+const SB_URL = "https://yrwpsbkcmxqyepyhxrhf.supabase.co";
+const SB_KEY = "sb_publishable_vuHW2Qd2sM--cev4Bj49XQ_v09_4h0f";
+const sb = window.supabase.createClient(SB_URL, SB_KEY, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true } });
+let USER = null; const D = {}; const dirty = new Set(); let flushTimer = null; let syncState = "Not synced yet";
+const BLANK = {
+  "hq-tasks": () => ({ items: [] }), "hq-events": () => ({ items: [] }), "hq-people": () => ({ items: [] }), "hq-wish": () => ({ items: [] }), "hq-members": () => ({ items: [] }),
+  "hq-growth": () => ({ goals: [], books: [], courses: [] }),
+  "hq-money": () => ({ accounts: [], debts: [], incoming: [], fixed: [], expenses: [], noSpend: [], cards: {}, cardList: ["Amex Platinum", "Iberia Icon"], trips: [], snap: {} }),
+};
+function doc(name) { if (!D[name]) D[name] = BLANK[name](); const b = BLANK[name](); for (const k in b) if (D[name][k] == null) D[name][k] = b[k]; return D[name]; }
+const cacheKey = () => "rubyshq-cache-" + (USER ? USER.id : "anon");
+function cacheSave() { try { localStorage.setItem(cacheKey(), JSON.stringify({ D, dirty: [...dirty] })); } catch (e) {} }
+function cacheLoad() { try { const c = JSON.parse(localStorage.getItem(cacheKey()) || "null"); if (c) { Object.assign(D, c.D || {}); (c.dirty || []).forEach(n => dirty.add(n)); } } catch (e) {} }
+function save(name) { dirty.add(name); cacheSave(); clearTimeout(flushTimer); flushTimer = setTimeout(flush, 500); }
+let flushing = false;
+async function flush() {
+  if (!USER || !dirty.size || flushing) return;
+  if (!navigator.onLine) { syncState = "Offline: saved on this phone, will sync later"; return; }
+  flushing = true; const names = [...dirty]; dirty.clear();
+  const rows = names.map(n => ({ user_id: USER.id, name: n, data: D[n], updated_at: new Date().toISOString() }));
+  const { error } = await sb.from("docs").upsert(rows, { onConflict: "user_id,name" });
+  flushing = false;
+  if (error) { names.forEach(n => dirty.add(n)); syncState = "Couldn't save, retrying"; setTimeout(flush, 15000); }
+  else { syncState = "Saved and synced"; if (dirty.size) flush(); }
+  cacheSave();
+}
+async function pull() {
+  if (!USER) return;
+  if (dirty.size) await flush();
+  const { data, error } = await sb.from("docs").select("name,data").like("name", "hq-%");
+  if (error) { syncState = "Offline: showing what's saved on this phone"; return; }
+  (data || []).forEach(r => { if (!dirty.has(r.name)) D[r.name] = r.data; });
+  cacheSave(); syncState = "Synced";
+  if (!document.activeElement || !document.activeElement.matches("input, textarea, select")) render();
+}
+window.addEventListener("online", () => { flush(); pull(); });
+document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") { NOW = new Date(); TODAY = iso(NOW); pull(); render(); } else flush(); });
+
+// ================= FX rates (to EUR) =================
+let FX = { EUR: 1, USD: 1.08, GBP: 0.85, CHF: 0.95 }; let fxDate = "";
+try { const c = JSON.parse(localStorage.getItem("rubyshq-fx") || "null"); if (c) { FX = Object.assign(FX, c.r); fxDate = c.d; } } catch (e) {}
+async function loadFx() {
+  if (fxDate === TODAY) return;
+  try { const r = await fetch("https://api.frankfurter.app/latest?from=EUR&to=USD,GBP,CHF"); const j = await r.json();
+    if (j && j.rates) { FX = Object.assign({ EUR: 1 }, j.rates); fxDate = TODAY; localStorage.setItem("rubyshq-fx", JSON.stringify({ r: FX, d: TODAY })); render(); } } catch (e) {}
+}
+const toEur = (amt, cur) => !cur || cur === "EUR" ? (amt || 0) : (amt || 0) / (FX[cur] || 1);
+
+// ================= Money logic =================
+function debtNow(d) {
+  if (!d.asOf) return d.bal || 0; const a = parse(d.asOf);
+  const months = (NOW.getFullYear() * 12 + NOW.getMonth()) - (a.getFullYear() * 12 + a.getMonth());
+  return Math.max(0, (d.bal || 0) - (d.pay || 0) * Math.max(0, months));
+}
+function totals() {
+  const m = doc("hq-money");
+  const assets = m.accounts.reduce((s, a) => s + toEur(a.bal, a.cur), 0);
+  const debts = m.debts.reduce((s, d) => s + debtNow(d), 0);
+  const incoming = m.incoming.reduce((s, x) => s + toEur(x.amt, x.cur), 0);
+  return { assets, debts, nw: assets - debts, incoming };
+}
+function monthChange(nw) {
+  const m = doc("hq-money"), k = ym(NOW);
+  if (m.snap[k] == null) { m.snap[k] = Math.round(nw * 100) / 100; save("hq-money"); return null; }
+  const c = nw - m.snap[k]; return Math.abs(c) < 0.01 ? null : c;
+}
+function monthExpenses(k = ym(NOW)) { return doc("hq-money").expenses.filter(e => e.date.slice(0, 7) === k); }
+function streak() {
+  const m = doc("hq-money"); const days = new Set(m.expenses.map(e => e.date).concat(m.noSpend));
+  let d = parse(TODAY); if (!days.has(iso(d))) d = addDays(d, -1);
+  let n = 0; while (days.has(iso(d))) { n++; d = addDays(d, -1); } return n;
+}
+const fixedMonthly = () => doc("hq-money").fixed.filter(f => f.freq !== "y").reduce((s, f) => s + (f.amt || 0), 0);
+
+// ================= People & dates =================
+function nextBday(p) { const t = parse(TODAY); let d = new Date(t.getFullYear(), p.m - 1, p.d); if (d < t) d = new Date(t.getFullYear() + 1, p.m - 1, p.d); return d; }
+const daysTo = d => Math.round((d - parse(TODAY)) / 864e5);
+const turns = (p, d) => p.y ? d.getFullYear() - p.y : null;
+
+// ================= Tasks logic =================
+const openTasks = () => doc("hq-tasks").items.filter(t => !t.done);
+function weekEnd() { return iso(addDays(parse(TODAY), 6)); }
+
+// ================= UI state =================
+let ui = { view: "home", page: null, tf: "all", gtab: "goals", gkind: "personal", openGoal: null, mtab: "overview", tdone: true };
+try { const u = JSON.parse(localStorage.getItem("rubyshq-ui") || "{}"); Object.assign(ui, u, { page: null }); } catch (e) {}
+const saveUi = () => { try { localStorage.setItem("rubyshq-ui", JSON.stringify({ view: ui.view, tf: ui.tf, gtab: ui.gtab, gkind: ui.gkind })); } catch (e) {} };
+
+// ================= Render =================
+function render() {
+  if (!USER) return;
+  const app = $("#app");
+  const html = ui.page ? (PAGES[ui.page] || PAGES.more)() : (VIEWS[ui.view] || VIEWS.home)();
+  app.innerHTML = html;
+  document.querySelectorAll(".tb").forEach(b => b.classList.toggle("on", !ui.page && b.dataset.v === ui.view));
+}
+function go(page) { ui.page = page; render(); window.scrollTo(0, 0); }
+const backBtn = (to = null) => `<button class="back" data-act="back" data-to="${to || ""}">${ic("back", 20, 2.2)}Back</button>`;
+
+function taskRow(t, opts = {}) {
+  const p = PROJ[t.p] || PROJ.other; const od = t.due && t.due < TODAY && !t.done;
+  const meta = [`<span style="color:${p[1]};font-weight:700">${p[0]}</span>`];
+  if (t.due && !opts.hideDate) meta.push(`<span class="${od ? "red" : ""}">${od ? "Overdue · " : ""}${nice(t.due)}</span>`);
+  return `<div class="row ${t.done ? "done" : ""}"><span class="bar" style="background:${p[1]}"></span>
+    <button class="cb" data-act="tdone" data-id="${t.id}">${t.done ? ic("check", 15, 3) : ""}</button>
+    <div class="tx" data-act="tedit" data-id="${t.id}"><div class="t1">${esc(t.t)}</div><div class="t2">${meta.join(" · ")}</div></div>
+    <button class="star ${t.star ? "on" : ""}" data-act="tstar" data-id="${t.id}">${icStar(18)}</button></div>`;
+}
+
+const VIEWS = {};
+VIEWS.home = function () {
+  const h = NOW.getHours(), greet = h < 12 ? "Good morning" : h < 20 ? "Good afternoon" : "Good evening";
+  const T = totals(), ch = monthChange(T.nw);
+  const ppl = doc("hq-people").items, tasks = doc("hq-tasks").items, evs = doc("hq-events").items;
+  const todayB = ppl.filter(p => daysTo(nextBday(p)) === 0), tomB = ppl.filter(p => daysTo(nextBday(p)) === 1);
+  const todayE = evs.filter(e => e.date === TODAY).sort((a, b) => (a.time || "").localeCompare(b.time || ""));
+  const dueT = tasks.filter(t => !t.done && t.due && t.due <= TODAY).sort((a, b) => a.due.localeCompare(b.due));
+  const doneToday = tasks.filter(t => t.done && t.doneAt === TODAY && t.due && t.due <= TODAY);
+  // reminders
+  const rems = [];
+  tomB.forEach(p => rems.push(`<div class="rem blue">${ic("cake", 18)}<span>Tomorrow: ${esc(p.name)}'s birthday</span></div>`));
+  doc("hq-members").items.filter(x => x.exp && daysTo(parse(x.exp)) >= 0 && daysTo(parse(x.exp)) <= 30).forEach(x => rems.push(`<div class="rem" data-act="go" data-p="members">${ic("bell", 18)}<span>${esc(x.name)} points expire ${nice(x.exp)}</span></div>`));
+  const m = doc("hq-money"); const prev = ym(new Date(NOW.getFullYear(), NOW.getMonth() - 1, 1));
+  if (NOW.getDate() <= 10 && m.cardList.some(c => (m.cards[prev] || {})[c] == null)) rems.push(`<div class="rem" data-act="cards" data-m="${prev}">${ic("member", 18)}<span>Log your ${MONTHS[+prev.slice(5) - 1]} card totals</span></div>`);
+  // today list
+  let today = "";
+  todayB.forEach(p => { const age = turns(p, parse(TODAY)); const hi = p.hi === NOW.getFullYear();
+    today += `<div class="row"><span class="ib dark">${ic("cake", 19)}</span><div class="tx"><div class="t1">${esc(p.name)}'s birthday</div><div class="t2">${age ? "Turns " + age : "Today"}</div></div>
+      <button class="pill ${hi ? "ok" : ""}" data-act="sayhi" data-id="${p.id}">${hi ? "Done ✓" : "Say hi"}</button></div>`; });
+  todayE.forEach(e => today += `<div class="row" data-act="eedit" data-id="${e.id}"><span class="ib">${ic("cal", 19)}</span><div class="tx"><div class="t1">${esc(e.title)}</div><div class="t2">${e.time ? esc(e.time) + (e.end ? " – " + esc(e.end) : "") : "All day"}</div></div></div>`);
+  dueT.concat(doneToday).forEach(t => today += taskRow(t, { hideDate: t.due === TODAY }));
+  if (!today) today = `<div class="empty">Nothing due today. Enjoy it.</div>`;
+  // week
+  const we = weekEnd();
+  const wkStar = tasks.filter(t => !t.done && t.star && (!t.due || (t.due > TODAY && t.due <= we))).sort((a, b) => (a.due || "9").localeCompare(b.due || "9"));
+  const wkB = ppl.filter(p => { const n = daysTo(nextBday(p)); return n > 1 && n <= 6; });
+  const sugg = tasks.filter(t => !t.done && !t.star && t.due && t.due > TODAY && t.due <= we).slice(0, 3);
+  let week = wkStar.map(t => `<div class="row"><span class="ib dark">${icStar(17)}</span><div class="tx" data-act="tedit" data-id="${t.id}"><div class="t1">${esc(t.t)}</div><div class="t2">${t.due ? nice(t.due) + " · " : ""}${PROJ[t.p] ? PROJ[t.p][0] : ""}</div></div></div>`).join("");
+  week += wkB.map(p => `<div class="row"><span class="ib">${ic("cake", 18)}</span><div class="tx"><div class="t1">${esc(p.name)}'s birthday</div><div class="t2">${nice(iso(nextBday(p)))}</div></div></div>`).join("");
+  week += sugg.map(t => `<div class="row"><span class="ib" style="background:#f0f0ed;color:var(--mute)">${icStar(16)}</span><div class="tx"><div class="t1">${esc(t.t)}</div><div class="t2">Suggested · ${nice(t.due)}</div></div><button class="pill soft" data-act="tstar" data-id="${t.id}">Pin</button></div>`).join("");
+  if (!week) week = `<div class="empty">Star a task to make it a milestone for the week.</div>`;
+  const nOpen = openTasks().length, gl = doc("hq-growth").goals.filter(g => !g.done).length;
+  const upB = ppl.filter(p => daysTo(nextBday(p)) <= 7).length;
+  const tiles = [["tasks", "Tasks", nOpen + " open", "tab:tasks"], ["money", "Money", m.incoming.length ? money(T.incoming, "EUR", { whole: true }) + " on its way" : "Spending & accounts", "tab:money"], ["growth", "Growth", gl + " goals", "growth"],
+    ["people", "People", upB ? upB + " this week" : ppl.length + " birthdays", "people"], ["wish", "Wishlist", doc("hq-wish").items.filter(w => !w.got).length + " items", "wish"], ["member", "Memberships", doc("hq-members").items.length + " cards", "members"]];
+  return `<div class="top"><div><div class="hi">${greet}</div><div class="nm">Rubén</div></div><button class="av" data-act="go" data-p="settings">R</button></div>
+  <button class="plat" style="width:100%;text-align:left;display:block" data-act="tab" data-v="money"><div class="pl1"><span>RUBY'S HQ</span><span class="chipc"></span></div>
+    <div class="lbl">Net worth</div><div class="nw">${bigMoney(T.nw)}</div>
+    <div class="pl2"><span>${ch == null ? "" : (ch > 0 ? "↑ " : "↓ ") + money(Math.abs(ch)) + " this month"}</span><span>${T.incoming ? "+" + money(T.incoming) + " on its way" : ""}</span></div></button>
+  ${rems.join("")}
+  <div class="sec"><h2>Today</h2><a>${DOW[NOW.getDay()].slice(0, 3)} ${NOW.getDate()} ${MONTHS[NOW.getMonth()].slice(0, 3)}</a></div>
+  <div class="card">${today}</div>
+  <div class="sec"><h2>This week</h2><a data-act="tab" data-v="tasks">See all</a></div>
+  <div class="card">${week}</div>
+  <div class="sec"><h2>Your life</h2></div>
+  <div class="grid">${tiles.map(([i, n, s, to]) => `<button class="tile" data-act="${to.startsWith("tab:") ? "tab" : "go"}" data-v="${to.slice(4)}" data-p="${to}"><span class="ti">${ic(i, 26)}</span><span><b>${n}</b><small>${esc(s)}</small></span></button>`).join("")}</div>`;
+};
+
+VIEWS.tasks = function () {
+  const all = doc("hq-tasks").items.filter(t => !t.arch && (ui.tf === "all" || t.p === ui.tf));
+  const we = weekEnd();
+  const groups = [["Overdue", t => !t.done && t.due && t.due < TODAY], ["Today", t => !t.done && t.due === TODAY], ["Next 7 days", t => !t.done && t.due > TODAY && t.due <= we],
+    ["Later", t => !t.done && t.due > we], ["No date", t => !t.done && !t.due]];
+  const byDue = (a, b) => (b.star - a.star) || (a.due || "").localeCompare(b.due || "");
+  let out = groups.map(([n, f]) => { const l = all.filter(f).sort(byDue); return l.length ? `<div class="sec"><h2 class="${n === "Overdue" ? "red" : ""}">${n}</h2><a>${l.length}</a></div><div class="card">${l.map(t => taskRow(t)).join("")}</div>` : ""; }).join("");
+  const dn = all.filter(t => t.done).sort((a, b) => (b.doneAt || "").localeCompare(a.doneAt || ""));
+  if (dn.length) out += `<div class="sec"><h2>Done</h2><a data-act="cleardone">Clear done</a></div><div class="card">${dn.map(t => taskRow(t)).join("")}</div>`;
+  if (!out) out = `<div class="card" style="margin-top:16px"><div class="empty">No tasks here. Tap + to add one.</div></div>`;
+  const cnt = k => doc("hq-tasks").items.filter(t => !t.done && (k === "all" || t.p === k)).length;
+  return `<div class="ptitle">Tasks</div>
+  <div class="chips"><button class="chip ${ui.tf === "all" ? "on" : ""}" data-act="tf" data-v="all">All · ${cnt("all")}</button>${Object.entries(PROJ).map(([k, [n, c]]) => `<button class="chip ${ui.tf === k ? "on" : ""}" data-act="tf" data-v="${k}"><span class="dot" style="background:${c}"></span>${n} · ${cnt(k)}</button>`).join("")}</div>
+  ${out}`;
+};
+
+VIEWS.money = function () {
+  const m = doc("hq-money"), T = totals();
+  const tab = ui.mtab;
+  let body = "";
+  if (tab === "overview") {
+    const ex = monthExpenses(), tot = ex.reduce((s, e) => s + e.amt, 0);
+    const byCat = Object.keys(CATS).map(k => [k, ex.filter(e => e.cat === k).reduce((s, e) => s + e.amt, 0)]);
+    const mx = Math.max(1, ...byCat.map(x => x[1]));
+    const st = streak();
+    const recent = m.expenses.slice().sort((a, b) => (b.date + (b.ts || "")).localeCompare(a.date + (a.ts || ""))).slice(0, 6);
+    const prev = ym(new Date(NOW.getFullYear(), NOW.getMonth() - 1, 1));
+    body = `<div class="sec"><h2>${MONTHS[NOW.getMonth()]} spending</h2>${st ? `<span class="streak">${ic("flame", 15, 2)}${st} day${st > 1 ? "s" : ""}</span>` : ""}</div>
+    <div class="card"><div class="row"><div class="tx"><div class="t2">Logged this month</div><div class="nw" style="font-size:30px">${bigMoney(tot)}</div></div>
+      <div style="display:flex;flex-direction:column;gap:8px"><button class="pill" data-act="addexp">+ Expense</button>${m.noSpend.includes(TODAY) || m.expenses.some(e => e.date === TODAY) ? "" : `<button class="pill soft" data-act="nospend">No spend today</button>`}</div></div>
+      <div style="padding:4px 0 8px">${byCat.map(([k, v]) => `<div class="catbar"><span class="nmc">${CATS[k][0]}</span><span class="prog"><i style="width:${v / mx * 100}%"></i></span><span class="v">${money(v, "EUR", { whole: v >= 1000 })}</span></div>`).join("")}</div></div>
+    <div class="sec"><h2>Recent</h2></div>
+    <div class="card">${recent.length ? recent.map(e => `<div class="row" data-act="expedit" data-id="${e.id}"><span class="ib">${ic(CATS[e.cat] ? CATS[e.cat][1] : "dots", 18)}</span><div class="tx"><div class="t1">${esc(e.note || CATS[e.cat][0])}</div><div class="t2">${nice(e.date)}${e.trip ? " · " + esc((m.trips.find(t => t.id === e.trip) || {}).name || "") : ""}</div></div><div class="amt">${money(e.amt)}</div></div>`).join("") : `<div class="empty">Nothing logged yet. Tap + Expense after your next purchase.</div>`}</div>
+    <div class="sec"><h2>Card totals</h2><a data-act="cards" data-m="${prev}">Log ${MONTHS[+prev.slice(5) - 1].slice(0, 3)}</a></div>
+    <div class="card">${cardMonths().map(k => { const c = m.cards[k] || {}; const s = m.cardList.reduce((a, n) => a + (c[n] || 0), 0); return `<div class="row" data-act="cards" data-m="${k}"><div class="tx"><div class="t1">${MONTHS[+k.slice(5) - 1]} ${k.slice(0, 4)}</div><div class="t2">${m.cardList.map(n => esc(n) + ": " + (c[n] != null ? money(c[n], "EUR", { whole: true }) : "–")).join(" · ")}</div></div><div class="amt">${s ? money(s) : ""}</div></div>`; }).join("")}</div>
+    <div class="note">Logged expenses show your patterns day to day. Card totals catch anything you didn't log.</div>`;
+  } else if (tab === "accounts") {
+    const grp = ty => m.accounts.filter(a => a.type === ty).map(a => `<div class="row" data-act="acc" data-id="${a.id}"><span class="ib">${ic("money", 18)}</span><div class="tx"><div class="t1">${esc(a.name)}</div><div class="t2">${a.upd ? "Updated " + nice(a.upd) : "Tap to set balance"}</div></div><div class="amt">${money(a.bal, a.cur)}${a.cur !== "EUR" ? `<small>${money(toEur(a.bal, a.cur))}</small>` : ""}</div></div>`).join("");
+    body = `<div class="sec"><h2>Personal</h2></div><div class="card">${grp("personal") || `<div class="empty">No accounts</div>`}</div>
+    <div class="sec"><h2>Business</h2></div><div class="card">${grp("business") || `<div class="empty">No accounts</div>`}</div>
+    <button class="btn ghost sm" style="margin-top:12px" data-act="acc">+ Add account</button>
+    <div class="sec"><h2>Debts</h2><a>${money(T.debts)}</a></div>
+    <div class="card">${m.debts.map(d => { const now = debtNow(d); const months = d.pay ? Math.ceil(now / d.pay) : null; const end = months != null ? addDays(new Date(NOW.getFullYear(), NOW.getMonth() + months, 1), 0) : null;
+      return `<div class="row" data-act="debt" data-id="${d.id}"><span class="ib dark">${ic("member", 18)}</span><div class="tx"><div class="t1">${esc(d.name)}</div><div class="t2">${d.pay ? money(d.pay) + "/month" : ""}${d.rate ? " · " + d.rate + "%" : ""}${now > 0 && end ? " · clear by " + MONTHS[end.getMonth()].slice(0, 3) + " " + end.getFullYear() : now <= 0 ? " · Paid off" : ""}</div></div><div class="amt red">${money(now)}</div></div>`; }).join("") || `<div class="empty">No debts</div>`}</div>
+    <button class="btn ghost sm" style="margin-top:12px" data-act="debt">+ Add debt</button>
+    <div class="note">Debts go down by their monthly payment on their own. Tap one to correct it.${fxDate ? " Exchange rates from " + nice(fxDate) + "." : ""}</div>`;
+  } else if (tab === "incoming") {
+    body = `<div class="sec"><h2>On its way</h2><a>${money(T.incoming)}</a></div>
+    <div class="card">${m.incoming.map(x => `<div class="row"><span class="ib">${ic("inbox", 18)}</span><div class="tx" data-act="inc" data-id="${x.id}"><div class="t1">${esc(x.from)}</div><div class="t2">${x.due ? "Expected " + nice(x.due) : "No date"}</div></div><div class="amt">${money(x.amt, x.cur)}</div><button class="pill soft" data-act="arrived" data-id="${x.id}">Arrived</button></div>`).join("") || `<div class="empty">Nothing pending.</div>`}</div>
+    <button class="btn ghost sm" style="margin-top:12px" data-act="inc">+ Add money on its way</button>
+    <div class="note">This doesn't count towards your net worth until you tap Arrived and pick the account it landed in.</div>`;
+  } else if (tab === "fixed") {
+    const mo = m.fixed.filter(f => f.freq !== "y"), yr = m.fixed.filter(f => f.freq === "y");
+    body = `<div class="sec"><h2>Every month</h2><a>${money(fixedMonthly())}</a></div>
+    <div class="card">${mo.map(f => `<div class="row" data-act="fix" data-id="${f.id}"><div class="tx"><div class="t1">${esc(f.name)}</div><div class="t2">${esc(f.via || "")}</div></div><div class="amt">${money(f.amt)}</div></div>`).join("") || `<div class="empty">None yet</div>`}</div>
+    <div class="sec"><h2>Every year</h2></div>
+    <div class="card">${yr.map(f => `<div class="row" data-act="fix" data-id="${f.id}"><div class="tx"><div class="t1">${esc(f.name)}</div><div class="t2">${f.month ? MONTHS[f.month - 1] : ""}${f.via ? " · " + esc(f.via) : ""}</div></div><div class="amt">${money(f.amt)}</div></div>`).join("") || `<div class="empty">None yet</div>`}</div>
+    <button class="btn ghost sm" style="margin-top:12px" data-act="fix">+ Add fixed cost</button>
+    <div class="sec"><h2>Investments</h2></div><div class="card"><div class="empty">Coming soon: your investments, with prices updated every day.</div></div>`;
+  }
+  return `<div class="ptitle">Money</div>
+  <div class="plat sm"><div class="pl1"><span>NET WORTH</span><span class="chipc"></span></div><div class="nw" style="margin-top:12px">${bigMoney(T.nw)}</div>
+  <div class="pl2"><span>Accounts ${money(T.assets, "EUR", { whole: true })}</span><span>Debts ${money(T.debts, "EUR", { whole: true })}</span></div></div>
+  <div class="seg" style="margin-top:16px">${[["overview", "Spending"], ["accounts", "Accounts"], ["incoming", "Incoming"], ["fixed", "Fixed"]].map(([k, n]) => `<button class="${tab === k ? "on" : ""}" data-act="mtab" data-v="${k}">${n}</button>`).join("")}</div>
+  ${body}`;
+};
+function cardMonths() { const out = []; for (let i = 1; i <= 4; i++) out.push(ym(new Date(NOW.getFullYear(), NOW.getMonth() - i, 1))); return out; }
+
+VIEWS.more = function () {
+  const items = [["growth", "Growth", "Goals, books and courses", "growth"], ["people", "People", "Birthdays", "people"], ["wish", "Wishlist", "Things you want", "wish"], ["member", "Memberships", "Airlines, hotels, cars", "members"], ["trophy", "Year in Review", NOW.getFullYear() + " so far", "review"], ["gear", "Settings", "Import, backup, sign out", "settings"]];
+  return `<div class="ptitle">More</div><div class="card">${items.map(([i, n, s, p]) => `<div class="row" data-act="go" data-p="${p}"><span class="ib">${ic(i, 19)}</span><div class="tx"><div class="t1">${n}</div><div class="t2">${s}</div></div><span style="color:var(--mute)">${ic("chev", 18)}</span></div>`).join("")}</div>`;
+};
+
+const PAGES = {};
+PAGES.growth = function () {
+  const g = doc("hq-growth"); let body = "";
+  if (ui.gtab === "goals") {
+    const list = g.goals.filter(x => (x.kind || "personal") === ui.gkind).sort((a, b) => a.done - b.done);
+    body = `<div class="seg" style="margin:12px 0 4px">${[["personal", "Personal"], ["pro", "Professional"]].map(([k, n]) => `<button class="${ui.gkind === k ? "on" : ""}" data-act="gkind" data-v="${k}">${n}</button>`).join("")}</div>
+    <div class="card" style="margin-top:12px">${list.map(x => { const n = x.steps.length, d = x.steps.filter(s => s.done).length, open = ui.openGoal === x.id;
+      return `<div class="goal" style="${list.indexOf(x) ? "border-top:1px solid var(--line)" : ""}"><div class="row ${x.done ? "done" : ""}" style="border:0">
+        <button class="cb" data-act="gdone" data-id="${x.id}">${x.done ? ic("check", 15, 3) : ""}</button>
+        <div class="tx" data-act="gopen" data-id="${x.id}"><div class="t1">${esc(x.t)}</div><div class="t2">${n ? d + " of " + n + " steps" : "Tap to add steps"}</div></div>
+        ${n ? `<span class="pct">${Math.round(d / n * 100)}%</span>` : ""}<span style="color:var(--mute);transform:rotate(${open ? 90 : 0}deg)">${ic("chev", 16)}</span></div>
+        ${open ? `<div class="steps">${x.steps.map(s => `<div class="step ${s.done ? "done" : ""}"><button class="cb ${s.done ? "" : ""}" style="${s.done ? "background:var(--blue);border-color:var(--blue);color:#fff" : ""}" data-act="sdone" data-g="${x.id}" data-id="${s.id}">${s.done ? ic("check", 13, 3) : ""}</button><span style="flex:1">${esc(s.t)}</span><button style="color:var(--mute);font-size:18px;padding:0 4px" data-act="sdel" data-g="${x.id}" data-id="${s.id}">×</button></div>`).join("")}
+          <form class="addstep" data-act="sadd" data-g="${x.id}"><input placeholder="Add a step" name="t"><button class="pill" type="submit">Add</button></form>
+          <div style="display:flex;gap:14px;margin-top:10px"><button class="link" data-act="gedit" data-id="${x.id}">Rename</button><button class="link red" data-act="gdel" data-id="${x.id}">Delete goal</button></div></div>` : ""}</div>`; }).join("") || `<div class="empty">No goals yet</div>`}</div>
+    <button class="btn ghost sm" style="margin-top:12px" data-act="gadd">+ Add goal</button>`;
+  } else {
+    const key = ui.gtab, list = g[key].slice().sort((a, b) => ({ 1: 0, 0: 1, 2: 2 }[a.s] - { 1: 0, 0: 1, 2: 2 }[b.s]));
+    const lab = ["To start", "In progress", "Done"];
+    body = `<div class="card" style="margin-top:14px">${list.map(x => `<div class="row"><span class="ib">${ic(key === "books" ? "book" : "growth", 18)}</span><div class="tx" data-act="bedit" data-k="${key}" data-id="${x.id}"><div class="t1">${esc(x.t)}</div>${x.doneAt ? `<div class="t2">Finished ${nice(x.doneAt)}</div>` : ""}</div><button class="state s${x.s}" data-act="bstate" data-k="${key}" data-id="${x.id}">${lab[x.s]}</button></div>`).join("") || `<div class="empty">Nothing here yet</div>`}</div>
+    <button class="btn ghost sm" style="margin-top:12px" data-act="badd" data-k="${key}">+ Add ${key === "books" ? "book" : "course"}</button>
+    <div class="note">Tap the label to move it along: To start, In progress, Done.</div>`;
+  }
+  return `${backBtn()}<div class="ptitle">Growth</div>
+  <div class="seg">${[["goals", "Goals"], ["books", "Books"], ["courses", "Courses"]].map(([k, n]) => `<button class="${ui.gtab === k ? "on" : ""}" data-act="gtab" data-v="${k}">${n}</button>`).join("")}</div>
+  ${body}
+  <button class="card row" style="width:100%;margin-top:18px;text-align:left" data-act="go" data-p="review"><span class="ib dark">${ic("trophy", 19)}</span><div class="tx"><div class="t1">Year in Review</div><div class="t2">Everything you've crossed off in ${NOW.getFullYear()}</div></div><span style="color:var(--mute)">${ic("chev", 18)}</span></button>`;
+};
+
+PAGES.people = function () {
+  const list = doc("hq-people").items.slice().sort((a, b) => nextBday(a) - nextBday(b));
+  return `${backBtn()}<div class="ptitle">People</div>
+  <div class="card">${list.map(p => { const d = nextBday(p), n = daysTo(d), age = turns(p, d);
+    return `<div class="row" data-act="pedit" data-id="${p.id}"><span class="ib ${n === 0 ? "dark" : ""}">${ic("cake", 18)}</span><div class="tx"><div class="t1">${esc(p.name)}</div><div class="t2">${p.d} ${MONTHS[p.m - 1]}${age ? " · turns " + age : ""}</div></div><span class="t2" style="font-weight:700;${n === 0 ? "color:var(--blue)" : ""}">${n === 0 ? "Today" : n === 1 ? "Tomorrow" : "in " + n + " days"}</span></div>`; }).join("") || `<div class="empty">No birthdays yet. Add them here, or send me your list and I'll load it in.</div>`}</div>
+  <button class="btn" style="margin-top:14px" data-act="padd">+ Add birthday</button>`;
+};
+
+PAGES.wish = function () {
+  const it = doc("hq-wish").items, open = it.filter(w => !w.got), got = it.filter(w => w.got);
+  const row = w => `<div class="row ${w.got ? "done" : ""}"><button class="cb" data-act="wgot" data-id="${w.id}">${w.got ? ic("check", 15, 3) : ""}</button><div class="tx" data-act="wedit" data-id="${w.id}"><div class="t1">${esc(w.t)}</div>${w.got && w.gotAt ? `<div class="t2">Got it ${nice(w.gotAt)}</div>` : ""}</div>${w.price ? `<div class="amt">${money(w.price, "EUR", { whole: w.price >= 100 })}</div>` : ""}</div>`;
+  return `${backBtn()}<div class="ptitle">Wishlist</div>
+  <button class="btn" data-act="wadd">+ Add to wishlist</button>
+  <div class="sec"><h2>Wanted</h2><a>${open.length}</a></div><div class="card">${open.map(row).join("") || `<div class="empty">Empty</div>`}</div>
+  ${got.length ? `<div class="sec"><h2>Got</h2><a>${got.length}</a></div><div class="card">${got.map(row).join("")}</div>` : ""}`;
+};
+
+PAGES.members = function () {
+  const it = doc("hq-members").items;
+  return `${backBtn()}<div class="ptitle">Memberships</div>` + Object.entries(MTYPES).map(([k, n]) => { const l = it.filter(x => x.type === k); return l.length ? `<div class="sec"><h2>${n}</h2></div><div class="card">${l.map(x => { const warn = x.exp && daysTo(parse(x.exp)) <= 30;
+    return `<div class="row"><span class="ib ${k === "air" ? "dark" : ""}">${ic(k === "air" ? "plane" : k === "car" ? "member" : k === "hotel" ? "home" : "star", 18)}</span><div class="tx" data-act="medit" data-id="${x.id}"><div class="t1">${esc(x.name)}${x.status ? ` <span class="t2" style="font-weight:700;color:#a07c1c">${esc(x.status)}</span>` : ""}</div><div class="t2">${x.num ? esc(x.num) : "No number"}${x.pts != null ? " · " + Number(x.pts).toLocaleString("en-GB") + " pts" : ""}${x.exp ? ` · <span class="${warn ? "red" : ""}">expires ${nice(x.exp)}</span>` : ""}</div></div>${x.num ? `<button class="copy" data-act="copy" data-v="${esc(x.num)}">Copy</button>` : ""}</div>`; }).join("")}</div>` : ""; }).join("") +
+  `<button class="btn" style="margin-top:16px" data-act="madd">+ Add membership</button><div class="note">Set an expiry date and you'll get a reminder on the home screen a month before.</div>`;
+};
+
+PAGES.review = function () {
+  const y = String(NOW.getFullYear()), inY = d => d && d.slice(0, 4) === y, g = doc("hq-growth");
+  const s = [["Tasks done", doc("hq-tasks").items.filter(t => t.done && inY(t.doneAt)).length], ["Steps done", g.goals.reduce((a, x) => a + x.steps.filter(st => st.done && inY(st.doneAt)).length, 0)],
+    ["Goals completed", g.goals.filter(x => x.done && inY(x.doneAt)).length], ["Books read", g.books.filter(x => x.s === 2 && inY(x.doneAt)).length],
+    ["Courses finished", g.courses.filter(x => x.s === 2 && inY(x.doneAt)).length], ["Wishlist got", doc("hq-wish").items.filter(x => x.got && inY(x.gotAt)).length]];
+  return `${backBtn()}<div class="ptitle">Year in Review</div>
+  <div class="plat sm" style="margin-bottom:14px"><div class="pl1"><span>${y}</span><span class="chipc"></span></div><div class="nw" style="margin-top:12px">${s.reduce((a, x) => a + x[1], 0)}</div><div class="pl2"><span>things crossed off this year</span><span></span></div></div>
+  <div class="stats">${s.map(([n, v]) => `<div class="stat"><b>${v}</b><small>${n}</small></div>`).join("")}</div>
+  <div class="note">Resets every January.</div>`;
+};
+
+PAGES.settings = function () {
+  return `${backBtn()}<div class="ptitle">Settings</div>
+  <div class="card">
+    <div class="row" data-act="import"><span class="ib">${ic("inbox", 18)}</span><div class="tx"><div class="t1">Import data file</div><div class="t2">Load the file Claude prepared for you</div></div></div>
+    <div class="row" data-act="export"><span class="ib">${ic("book", 18)}</span><div class="tx"><div class="t1">Download a backup</div><div class="t2">Everything in one file</div></div></div>
+    <div class="row" data-act="cardlist"><span class="ib">${ic("member", 18)}</span><div class="tx"><div class="t1">Credit cards</div><div class="t2">${doc("hq-money").cardList.map(esc).join(", ")}</div></div></div>
+  </div>
+  <div class="card" style="margin-top:14px"><div class="row"><div class="tx"><div class="t1">Sync</div><div class="t2">${esc(syncState)}</div></div></div><div class="row"><div class="tx"><div class="t1">Signed in</div><div class="t2">${esc(USER && USER.email)}</div></div></div></div>
+  <button class="btn danger" style="margin-top:14px" data-act="logout">Sign out</button>
+  <div class="note" style="text-align:center">Ruby's HQ · your data is private to your account</div>`;
+};
+
+// ================= Sheets =================
+function openSheet(html, onMount) {
+  const sh = $("#sheet"), sc = $("#scrim");
+  sh.innerHTML = `<div class="grab"></div>` + html; sc.style.display = "block";
+  requestAnimationFrame(() => { sc.classList.add("show"); sh.classList.add("show"); });
+  if (onMount) onMount(sh);
+}
+function closeSheet() { const sh = $("#sheet"), sc = $("#scrim"); sh.classList.remove("show"); sc.classList.remove("show"); setTimeout(() => { sc.style.display = "none"; sh.innerHTML = ""; }, 250); }
+$("#scrim").addEventListener("click", closeSheet);
+const projPick = (sel) => `<div class="chips" style="margin:0 -18px 12px">${Object.entries(PROJ).map(([k, [n, c]]) => `<button type="button" class="chip ${sel === k ? "on" : ""}" data-pick="p" data-v="${k}"><span class="dot" style="background:${c}"></span>${n}</button>`).join("")}</div>`;
+function wirePicks(sh) { sh.querySelectorAll("[data-pick]").forEach(b => b.addEventListener("click", () => { sh.querySelectorAll(`[data-pick="${b.dataset.pick}"]`).forEach(x => x.classList.remove("on")); b.classList.add("on"); })); }
+const picked = (sh, k) => { const b = sh.querySelector(`[data-pick="${k}"].on`); return b ? b.dataset.v : null; };
+
+function taskSheet(id) {
+  const items = doc("hq-tasks").items, t = id ? items.find(x => x.id === id) : { t: "", p: ui.tf !== "all" ? ui.tf : "personal", due: null, star: false };
+  openSheet(`<h3>${id ? "Edit task" : "New task"}</h3><form id="f">
+    <div class="field"><input class="inp" name="t" placeholder="What needs doing?" value="${esc(t.t)}" required></div>
+    ${projPick(t.p)}
+    <div class="two"><div class="field"><label>Due date</label><input class="inp" type="date" name="due" value="${t.due || ""}"></div>
+    <div class="field"><label>Milestone</label><button type="button" class="inp" id="stb" style="text-align:left;display:flex;align-items:center;gap:8px;color:${t.star ? "#a07c1c" : "var(--sub)"}">${icStar(18)}<span>${t.star ? "Starred" : "Not starred"}</span></button></div></div>
+    <button class="btn" type="submit">${id ? "Save" : "Add task"}</button>${id ? `<button class="btn danger" type="button" id="del">Delete task</button>` : ""}</form>`, sh => {
+    wirePicks(sh); let star = !!t.star;
+    sh.querySelector("#stb").onclick = e => { star = !star; e.currentTarget.style.color = star ? "#a07c1c" : "var(--sub)"; e.currentTarget.querySelector("span").textContent = star ? "Starred" : "Not starred"; };
+    if (!id) setTimeout(() => sh.querySelector("[name=t]").focus(), 280);
+    sh.querySelector("#f").onsubmit = e => { e.preventDefault(); const f = e.target;
+      const v = { t: f.t.value.trim(), p: picked(sh, "p") || "personal", due: f.due.value || null, star };
+      if (!v.t) return; if (id) Object.assign(t, v); else items.push(Object.assign({ id: uid(), done: false, created: TODAY }, v));
+      save("hq-tasks"); closeSheet(); render(); toast(id ? "Saved" : "Task added"); };
+    if (id) sh.querySelector("#del").onclick = () => { items.splice(items.indexOf(t), 1); save("hq-tasks"); closeSheet(); render(); toast("Deleted"); };
+  });
+}
+
+function expenseSheet(id) {
+  const m = doc("hq-money"), e = id ? m.expenses.find(x => x.id === id) : { amt: "", cat: null, note: "", date: TODAY, trip: "" };
+  openSheet(`<h3>${id ? "Edit expense" : "New expense"}</h3><form id="f">
+    <div class="field"><input class="inp big" name="amt" inputmode="decimal" placeholder="€0.00" value="${e.amt === "" ? "" : e.amt}" required></div>
+    <div class="choice" style="grid-template-columns:1fr 1fr 1fr;margin-bottom:12px">${Object.entries(CATS).map(([k, [n, i]]) => `<button type="button" data-pick="c" data-v="${k}" class="${e.cat === k ? "on" : ""}" style="padding:12px 10px">${ic(i, 20)}<b style="font-size:12.5px;margin-top:6px">${n}</b></button>`).join("")}</div>
+    <div class="field"><input class="inp" name="note" placeholder="Note (optional), e.g. Mercadona" value="${esc(e.note)}"></div>
+    <div class="two"><div class="field"><label>Date</label><input class="inp" type="date" name="date" value="${e.date}"></div>
+    <div class="field"><label>Trip</label><select class="inp" name="trip"><option value="">No trip</option>${m.trips.map(t => `<option value="${t.id}" ${e.trip === t.id ? "selected" : ""}>${esc(t.name)}</option>`).join("")}<option value="__new">+ New trip…</option></select></div></div>
+    <button class="btn" type="submit">${id ? "Save" : "Save expense"}</button>${id ? `<button class="btn danger" type="button" id="del">Delete</button>` : ""}</form>
+    <style>.choice button.on{background:var(--ink);color:#fff}.choice button.on b{color:#fff}</style>`, sh => {
+    wirePicks(sh); if (!id) setTimeout(() => sh.querySelector("[name=amt]").focus(), 280);
+    sh.querySelector("[name=trip]").onchange = ev => { if (ev.target.value === "__new") { const n = prompt("Trip name, e.g. Lisbon, Dec"); if (n && n.trim()) { const t = { id: uid(), name: n.trim() }; m.trips.push(t); const o = new Option(t.name, t.id, true, true); ev.target.add(o, ev.target.options.length - 1); ev.target.value = t.id; save("hq-money"); } else ev.target.value = ""; } };
+    sh.querySelector("#f").onsubmit = ev => { ev.preventDefault(); const f = ev.target, amt = num(f.amt.value), cat = picked(sh, "c");
+      if (!amt || amt <= 0) { toast("Enter an amount"); return; } if (!cat) { toast("Pick a category"); return; }
+      const v = { amt, cat, note: f.note.value.trim(), date: f.date.value || TODAY, trip: f.trip.value || "" };
+      if (id) Object.assign(e, v); else m.expenses.push(Object.assign({ id: uid(), ts: Date.now() }, v));
+      m.noSpend = m.noSpend.filter(d => d !== v.date);
+      save("hq-money"); closeSheet(); render(); toast(id ? "Saved" : "Expense saved"); };
+    if (id) sh.querySelector("#del").onclick = () => { m.expenses.splice(m.expenses.indexOf(e), 1); save("hq-money"); closeSheet(); render(); };
+  });
+}
+
+function eventSheet(id) {
+  const it = doc("hq-events").items, e = id ? it.find(x => x.id === id) : { title: "", date: TODAY, time: "", end: "" };
+  openSheet(`<h3>${id ? "Edit event" : "New meeting or event"}</h3><form id="f">
+    <div class="field"><input class="inp" name="title" placeholder="e.g. Call with TFW board" value="${esc(e.title)}" required></div>
+    <div class="field"><label>Date</label><input class="inp" type="date" name="date" value="${e.date}" required></div>
+    <div class="two"><div class="field"><label>Starts</label><input class="inp" type="time" name="time" value="${e.time || ""}"></div><div class="field"><label>Ends</label><input class="inp" type="time" name="end" value="${e.end || ""}"></div></div>
+    <button class="btn" type="submit">Save</button>${id ? `<button class="btn danger" type="button" id="del">Delete</button>` : ""}</form>
+    <div class="note">Later, meetings from your Google calendars will show up here by themselves.</div>`, sh => {
+    sh.querySelector("#f").onsubmit = ev => { ev.preventDefault(); const f = ev.target; const v = { title: f.title.value.trim(), date: f.date.value, time: f.time.value, end: f.end.value };
+      if (id) Object.assign(e, v); else it.push(Object.assign({ id: uid() }, v));
+      const cut = iso(addDays(parse(TODAY), -60)); doc("hq-events").items = it.filter(x => x.date >= cut);
+      save("hq-events"); closeSheet(); render(); toast("Saved"); };
+    if (id) sh.querySelector("#del").onclick = () => { it.splice(it.indexOf(e), 1); save("hq-events"); closeSheet(); render(); };
+  });
+}
+
+function personSheet(id) {
+  const it = doc("hq-people").items, p = id ? it.find(x => x.id === id) : { name: "", d: "", m: "", y: "" };
+  openSheet(`<h3>${id ? "Edit birthday" : "New birthday"}</h3><form id="f">
+    <div class="field"><input class="inp" name="name" placeholder="Name" value="${esc(p.name)}" required></div>
+    <div class="two" style="grid-template-columns:1fr 2fr 1.3fr"><div class="field"><label>Day</label><input class="inp" name="d" inputmode="numeric" value="${p.d || ""}" required></div>
+    <div class="field"><label>Month</label><select class="inp" name="m">${MONTHS.map((n, i) => `<option value="${i + 1}" ${+p.m === i + 1 ? "selected" : ""}>${n}</option>`).join("")}</select></div>
+    <div class="field"><label>Year (optional)</label><input class="inp" name="y" inputmode="numeric" value="${p.y || ""}"></div></div>
+    <button class="btn" type="submit">Save</button>${id ? `<button class="btn danger" type="button" id="del">Delete</button>` : ""}</form>`, sh => {
+    sh.querySelector("#f").onsubmit = ev => { ev.preventDefault(); const f = ev.target, d = parseInt(f.d.value, 10), mo = parseInt(f.m.value, 10), y = parseInt(f.y.value, 10);
+      if (!(d >= 1 && d <= 31)) { toast("Check the day"); return; }
+      const v = { name: f.name.value.trim(), d, m: mo, y: y > 1900 ? y : null };
+      if (id) Object.assign(p, v); else it.push(Object.assign({ id: uid() }, v));
+      save("hq-people"); closeSheet(); render(); toast("Saved"); };
+    if (id) sh.querySelector("#del").onclick = () => { it.splice(it.indexOf(p), 1); save("hq-people"); closeSheet(); render(); };
+  });
+}
+
+function simpleSheet(title, fields, obj, onSave, onDel) {
+  openSheet(`<h3>${title}</h3><form id="f">${fields.map(f => f.type === "select"
+    ? `<div class="field"><label>${f.label}</label><select class="inp" name="${f.k}">${f.opts.map(([v, n]) => `<option value="${v}" ${String(obj[f.k]) === String(v) ? "selected" : ""}>${n}</option>`).join("")}</select></div>`
+    : `<div class="field"><label>${f.label}</label><input class="inp" name="${f.k}" ${f.type ? `type="${f.type}"` : ""} ${f.num ? 'inputmode="decimal"' : ""} placeholder="${f.ph || ""}" value="${obj[f.k] == null ? "" : esc(obj[f.k])}" ${f.req ? "required" : ""}></div>`).join("")}
+    <button class="btn" type="submit">Save</button>${onDel ? `<button class="btn danger" type="button" id="del">Delete</button>` : ""}</form>`, sh => {
+    sh.querySelector("#f").onsubmit = ev => { ev.preventDefault(); const v = {}; fields.forEach(f => { const x = ev.target[f.k].value; v[f.k] = f.num ? num(x) : (f.int ? (parseInt(x, 10) || null) : x.trim ? x.trim() : x); }); if (onSave(v) !== false) { closeSheet(); render(); toast("Saved"); } };
+    if (onDel) sh.querySelector("#del").onclick = () => { onDel(); closeSheet(); render(); };
+  });
+}
+const curOpts = CURS.map(c => [c, c]);
+
+function cardsSheet(k) {
+  const m = doc("hq-money"), c = m.cards[k] || {};
+  openSheet(`<h3>${MONTHS[+k.slice(5) - 1]} card totals</h3><form id="f">${m.cardList.map((n, i) => `<div class="field"><label>${esc(n)}</label><input class="inp" name="c${i}" inputmode="decimal" placeholder="€0.00" value="${c[n] == null ? "" : c[n]}"></div>`).join("")}
+    <button class="btn" type="submit">Save</button></form><div class="note">What you spent on each card that month, from your statement.</div>`, sh => {
+    sh.querySelector("#f").onsubmit = ev => { ev.preventDefault(); const o = {}; m.cardList.forEach((n, i) => { const v = num(ev.target["c" + i].value); if (v != null) o[n] = v; }); m.cards[k] = o; save("hq-money"); closeSheet(); render(); toast("Saved"); };
+  });
+}
+
+function plusSheet() {
+  openSheet(`<h3>Add</h3><div class="choice">
+    <button data-a="task">${ic("tasks", 24)}<b>Task</b><small>For any project</small></button>
+    <button data-a="exp">${ic("money", 24)}<b>Expense</b><small>Takes 3 seconds</small></button>
+    <button data-a="ev">${ic("cal", 24)}<b>Meeting or event</b><small>Shows on Today</small></button>
+    <button data-a="bd">${ic("cake", 24)}<b>Birthday</b><small>Reminder on the day</small></button></div>`, sh => {
+    sh.querySelectorAll("[data-a]").forEach(b => b.onclick = () => { const a = b.dataset.a; closeSheet(); setTimeout(() => ({ task: () => taskSheet(), exp: () => expenseSheet(), ev: () => eventSheet(), bd: () => personSheet() })[a](), 260); });
+  });
+}
+
+function confirmSheet(title, text, yes, fn) {
+  openSheet(`<h3>${title}</h3><div class="note" style="margin:0 4px 16px;font-size:14.5px">${text}</div><button class="btn" id="y">${yes}</button><button class="btn ghost" id="n">Cancel</button>`, sh => {
+    sh.querySelector("#y").onclick = () => { closeSheet(); fn(); }; sh.querySelector("#n").onclick = closeSheet; });
+}
+
+// ================= Actions =================
+const findIn = (name, key, id) => doc(name)[key].find(x => x.id === id);
+const ACT = {
+  tab: el => { ui.view = el.dataset.v; ui.page = null; saveUi(); render(); window.scrollTo(0, 0); },
+  go: el => go(el.dataset.p),
+  back: () => { ui.page = null; render(); window.scrollTo(0, 0); },
+  plus: () => plusSheet(),
+  tf: el => { ui.tf = el.dataset.v; saveUi(); render(); },
+  tdone: el => { const t = findIn("hq-tasks", "items", el.dataset.id); t.done = !t.done; t.doneAt = t.done ? TODAY : null; save("hq-tasks"); render(); },
+  tstar: el => { const t = findIn("hq-tasks", "items", el.dataset.id); t.star = !t.star; save("hq-tasks"); render(); if (t.star) toast("Pinned as a milestone"); },
+  tedit: el => taskSheet(el.dataset.id),
+  cleardone: () => { doc("hq-tasks").items.forEach(t => { if (t.done) t.arch = true; }); save("hq-tasks"); render(); toast("Cleared"); },
+  sayhi: el => { const p = findIn("hq-people", "items", el.dataset.id); p.hi = p.hi === NOW.getFullYear() ? null : NOW.getFullYear(); save("hq-people"); render(); },
+  eedit: el => eventSheet(el.dataset.id),
+  mtab: el => { ui.mtab = el.dataset.v; render(); },
+  addexp: () => expenseSheet(),
+  expedit: el => expenseSheet(el.dataset.id),
+  nospend: () => { const m = doc("hq-money"); m.noSpend.push(TODAY); save("hq-money"); render(); toast("Logged: no spending today"); },
+  cards: el => cardsSheet(el.dataset.m),
+  acc: el => { const m = doc("hq-money"), id = el.dataset.id, a = id ? m.accounts.find(x => x.id === id) : { name: "", type: "personal", cur: "EUR", bal: "" };
+    simpleSheet(id ? a.name : "New account", [{ k: "bal", label: "Balance today", num: 1, ph: "0.00" }, { k: "cur", label: "Currency", type: "select", opts: curOpts }, { k: "name", label: "Name", req: 1 }, { k: "type", label: "Type", type: "select", opts: [["personal", "Personal"], ["business", "Business"]] }], a,
+      v => { v.bal = v.bal || 0; v.upd = TODAY; if (id) Object.assign(a, v); else m.accounts.push(Object.assign({ id: uid() }, v)); save("hq-money"); },
+      id ? () => { m.accounts.splice(m.accounts.indexOf(a), 1); save("hq-money"); } : null); },
+  debt: el => { const m = doc("hq-money"), id = el.dataset.id, d = id ? m.debts.find(x => x.id === id) : { name: "", bal: "", pay: "", rate: "" };
+    const view = Object.assign({}, d, { bal: id ? Math.round(debtNow(d) * 100) / 100 : "" });
+    simpleSheet(id ? d.name : "New debt", [{ k: "name", label: "Name", req: 1 }, { k: "bal", label: "Left to pay today", num: 1 }, { k: "pay", label: "Monthly payment", num: 1 }, { k: "rate", label: "Interest % (optional)", num: 1 }], view,
+      v => { v.asOf = TODAY; v.bal = v.bal || 0; if (id) Object.assign(d, v); else m.debts.push(Object.assign({ id: uid() }, v)); save("hq-money"); },
+      id ? () => { m.debts.splice(m.debts.indexOf(d), 1); save("hq-money"); } : null); },
+  inc: el => { const m = doc("hq-money"), id = el.dataset.id, x = id ? m.incoming.find(i => i.id === id) : { from: "", amt: "", cur: "EUR", due: "" };
+    simpleSheet(id ? "Edit" : "Money on its way", [{ k: "from", label: "From / what for", req: 1, ph: "e.g. Commission, invoice #12" }, { k: "amt", label: "Amount", num: 1 }, { k: "cur", label: "Currency", type: "select", opts: curOpts }, { k: "due", label: "Expected (optional)", type: "date" }], x,
+      v => { if (!v.amt) { toast("Enter an amount"); return false; } if (id) Object.assign(x, v); else m.incoming.push(Object.assign({ id: uid() }, v)); save("hq-money"); },
+      id ? () => { m.incoming.splice(m.incoming.indexOf(x), 1); save("hq-money"); } : null); },
+  arrived: el => { const m = doc("hq-money"), x = m.incoming.find(i => i.id === el.dataset.id);
+    openSheet(`<h3>Where did it land?</h3><div class="note" style="margin:0 4px 12px">${esc(x.from)} · ${money(x.amt, x.cur)}</div><div class="card">${m.accounts.map(a => `<div class="row" data-acc="${a.id}"><span class="ib">${ic("money", 18)}</span><div class="tx"><div class="t1">${esc(a.name)}</div><div class="t2">${money(a.bal, a.cur)}</div></div></div>`).join("")}</div>`, sh => {
+      sh.querySelectorAll("[data-acc]").forEach(r => r.onclick = () => { const a = m.accounts.find(z => z.id === r.dataset.acc); const add = a.cur === x.cur ? x.amt : toEur(x.amt, x.cur) * (FX[a.cur] || 1);
+        a.bal = Math.round(((a.bal || 0) + add) * 100) / 100; a.upd = TODAY; m.incoming.splice(m.incoming.indexOf(x), 1); save("hq-money"); closeSheet(); render(); toast("Added to " + a.name); }); }); },
+  fix: el => { const m = doc("hq-money"), id = el.dataset.id, f = id ? m.fixed.find(x => x.id === id) : { name: "", amt: "", via: "", freq: "m", month: "" };
+    simpleSheet(id ? f.name : "New fixed cost", [{ k: "name", label: "Name", req: 1 }, { k: "amt", label: "Amount", num: 1 }, { k: "freq", label: "How often", type: "select", opts: [["m", "Every month"], ["y", "Every year"]] }, { k: "month", label: "Month (if yearly)", type: "select", opts: [["", "–"]].concat(MONTHS.map((n, i) => [i + 1, n])) }, { k: "via", label: "Paid with", ph: "Debit, Amex…" }], f,
+      v => { v.month = parseInt(v.month, 10) || null; v.amt = v.amt || 0; if (id) Object.assign(f, v); else m.fixed.push(Object.assign({ id: uid() }, v)); save("hq-money"); },
+      id ? () => { m.fixed.splice(m.fixed.indexOf(f), 1); save("hq-money"); } : null); },
+  cardlist: () => { const m = doc("hq-money"); simpleSheet("Credit cards", [{ k: "list", label: "Card names, separated by commas" }], { list: m.cardList.join(", ") }, v => { m.cardList = v.list.split(",").map(s => s.trim()).filter(Boolean); save("hq-money"); }); },
+  gtab: el => { ui.gtab = el.dataset.v; saveUi(); render(); },
+  gkind: el => { ui.gkind = el.dataset.v; saveUi(); render(); },
+  gopen: el => { ui.openGoal = ui.openGoal === el.dataset.id ? null : el.dataset.id; render(); },
+  gdone: el => { const g = findIn("hq-growth", "goals", el.dataset.id); g.done = !g.done; g.doneAt = g.done ? TODAY : null; save("hq-growth"); render(); if (g.done) toast("Goal completed"); },
+  sdone: el => { const g = findIn("hq-growth", "goals", el.dataset.g), s = g.steps.find(x => x.id === el.dataset.id); s.done = !s.done; s.doneAt = s.done ? TODAY : null; save("hq-growth"); render(); },
+  sdel: el => { const g = findIn("hq-growth", "goals", el.dataset.g); g.steps = g.steps.filter(x => x.id !== el.dataset.id); save("hq-growth"); render(); },
+  gadd: () => simpleSheet("New goal", [{ k: "t", label: "Goal", req: 1 }, { k: "kind", label: "Type", type: "select", opts: [["personal", "Personal"], ["pro", "Professional"]] }], { t: "", kind: ui.gkind }, v => { const g = { id: uid(), t: v.t, kind: v.kind, steps: [], done: false }; doc("hq-growth").goals.push(g); ui.openGoal = g.id; ui.gkind = v.kind; save("hq-growth"); }),
+  gedit: el => { const g = findIn("hq-growth", "goals", el.dataset.id); simpleSheet("Rename goal", [{ k: "t", label: "Goal", req: 1 }, { k: "kind", label: "Type", type: "select", opts: [["personal", "Personal"], ["pro", "Professional"]] }], g, v => { Object.assign(g, v); save("hq-growth"); }); },
+  gdel: el => confirmSheet("Delete goal?", "This removes the goal and its steps.", "Delete", () => { const gs = doc("hq-growth"); gs.goals = gs.goals.filter(x => x.id !== el.dataset.id); save("hq-growth"); render(); }),
+  bstate: el => { const x = findIn("hq-growth", el.dataset.k, el.dataset.id); x.s = (x.s + 1) % 3; x.doneAt = x.s === 2 ? TODAY : null; save("hq-growth"); render(); if (x.s === 2) toast("Nice one. Added to Year in Review"); },
+  badd: el => { const k = el.dataset.k; simpleSheet(k === "books" ? "New book" : "New course", [{ k: "t", label: "Title", req: 1 }], { t: "" }, v => { doc("hq-growth")[k].push({ id: uid(), t: v.t, s: 0 }); save("hq-growth"); }); },
+  bedit: el => { const k = el.dataset.k, l = doc("hq-growth")[k], x = l.find(z => z.id === el.dataset.id); simpleSheet("Edit", [{ k: "t", label: "Title", req: 1 }], x, v => { x.t = v.t; save("hq-growth"); }, () => { l.splice(l.indexOf(x), 1); save("hq-growth"); }); },
+  padd: () => personSheet(), pedit: el => personSheet(el.dataset.id),
+  wadd: () => simpleSheet("Add to wishlist", [{ k: "t", label: "What", req: 1 }, { k: "price", label: "Price (optional)", num: 1 }], { t: "", price: "" }, v => { doc("hq-wish").items.push({ id: uid(), t: v.t, price: v.price, got: false }); save("hq-wish"); }),
+  wedit: el => { const l = doc("hq-wish").items, w = l.find(x => x.id === el.dataset.id); simpleSheet("Edit", [{ k: "t", label: "What", req: 1 }, { k: "price", label: "Price (optional)", num: 1 }], w, v => { Object.assign(w, v); save("hq-wish"); }, () => { l.splice(l.indexOf(w), 1); save("hq-wish"); }); },
+  wgot: el => { const w = findIn("hq-wish", "items", el.dataset.id); w.got = !w.got; w.gotAt = w.got ? TODAY : null; save("hq-wish"); render(); if (w.got) toast("Enjoy it"); },
+  madd: () => ACT.medit({ dataset: {} }),
+  medit: el => { const l = doc("hq-members").items, id = el.dataset.id, x = id ? l.find(z => z.id === id) : { type: "air", name: "", num: "", status: "", pts: "", exp: "" };
+    simpleSheet(id ? x.name : "New membership", [{ k: "name", label: "Programme", req: 1 }, { k: "type", label: "Type", type: "select", opts: Object.entries(MTYPES) }, { k: "num", label: "Member number" }, { k: "status", label: "Status level", ph: "e.g. Gold" }, { k: "pts", label: "Points", num: 1 }, { k: "exp", label: "Points expire", type: "date" }], x,
+      v => { v.exp = v.exp || null; if (id) Object.assign(x, v); else l.push(Object.assign({ id: uid() }, v)); save("hq-members"); }, id ? () => { l.splice(l.indexOf(x), 1); save("hq-members"); } : null); },
+  copy: el => { const v = el.dataset.v; (navigator.clipboard ? navigator.clipboard.writeText(v) : Promise.reject()).then(() => toast("Copied " + v), () => toast(v)); },
+  import: () => $("#file").click(),
+  export: () => { const blob = new Blob([JSON.stringify({ _rubyshq: 1, docs: Object.fromEntries(Object.keys(BLANK).map(k => [k, doc(k)])) }, null, 1)], { type: "application/json" });
+    const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "rubys-hq-backup-" + TODAY + ".json"; a.click(); },
+  logout: () => confirmSheet("Sign out?", "Your data stays safe in your account.", "Sign out", async () => { await sb.auth.signOut(); }),
+};
+document.addEventListener("click", e => {
+  const el = e.target.closest("[data-act]"); if (!el || el.tagName === "FORM") return;
+  const a = ACT[el.dataset.act]; if (a) { e.preventDefault(); a(el, e); }
+});
+document.addEventListener("submit", e => {
+  const f = e.target; if (f.dataset.act !== "sadd") return; e.preventDefault();
+  const t = f.t.value.trim(); if (!t) return; const g = findIn("hq-growth", "goals", f.dataset.g); g.steps.push({ id: uid(), t, done: false }); save("hq-growth"); render();
+  const nf = document.querySelector(`form[data-g="${g.id}"] input`); if (nf) nf.focus();
+});
+$("#file").addEventListener("change", async e => {
+  const file = e.target.files[0]; e.target.value = ""; if (!file) return;
+  let j; try { j = JSON.parse(await file.text()); } catch (err) { toast("That file couldn't be read"); return; }
+  if (!j || !j.docs) { toast("That isn't a Ruby's HQ file"); return; }
+  const names = Object.keys(j.docs).filter(k => BLANK[k]);
+  confirmSheet("Import this file?", `It will load: ${names.map(n => n.replace("hq-", "")).join(", ")}. Anything already in those sections is replaced.`, "Import", () => {
+    names.forEach(n => { D[n] = j.docs[n]; save(n); }); render(); toast("Imported");
+  });
+});
+
+// ================= Auth =================
+function enter(user) {
+  USER = user; for (const k in D) delete D[k]; dirty.clear(); cacheLoad();
+  $("#login").classList.add("hidden"); $("#app").classList.remove("hidden"); $("#tab").classList.remove("hidden");
+  render(); pull(); loadFx();
+}
+function showLogin(msg) { USER = null; $("#login").classList.remove("hidden"); $("#app").classList.add("hidden"); $("#tab").classList.add("hidden"); $("#lg-msg").textContent = msg || ""; }
+const authErr = e => { const m = (e && e.message || "").toLowerCase(); if (m.includes("confirm")) return "Confirm your email first using the link we sent."; if (m.includes("invalid")) return "Wrong email or password."; return "Couldn't connect. Check your connection and try again."; };
+$("#loginform").addEventListener("submit", async e => {
+  e.preventDefault(); const msg = $("#lg-msg"); msg.textContent = "Signing in…";
+  const { data, error } = await sb.auth.signInWithPassword({ email: $("#lg-email").value.trim(), password: $("#lg-pass").value });
+  if (error) msg.textContent = authErr(error); else enter(data.user);
+});
+async function start() {
+  const { data } = await sb.auth.getSession();
+  if (data && data.session) enter(data.session.user); else showLogin();
+  sb.auth.onAuthStateChange((ev, session) => {
+    if (ev === "SIGNED_IN" && session && (!USER || USER.id !== session.user.id)) enter(session.user);
+    if (ev === "SIGNED_OUT") { for (const k in D) delete D[k]; showLogin(); }
+  });
+}
+// Demo mode for previews only: index.html?demo loads a local file without signing in.
+if (location.search.includes("demo")) {
+  USER = { id: "demo", email: "demo@preview" };
+  fetch(new URLSearchParams(location.search).get("demo") || "demo.json").then(r => r.json()).then(j => { Object.assign(D, j.docs); flush = async () => {}; $("#login").classList.add("hidden"); $("#app").classList.remove("hidden"); $("#tab").classList.remove("hidden"); render(); }).catch(() => {});
+} else start();
+if ("serviceWorker" in navigator && !location.search.includes("demo")) navigator.serviceWorker.register("sw.js");
+</script>
+</body>
+</html>

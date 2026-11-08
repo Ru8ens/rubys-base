@@ -1,11 +1,11 @@
 // Ruby's Base: funciona sin conexión. Sube VERSION en cada actualización.
-const VERSION = "rb-2026-11-08c";
+const VERSION = "rb-2026-11-08d";
 const ASSETS = ["./", "./index.html", "./manifest.webmanifest", "./supabase.js", "./591.supabase.js",
   "./icons/icon-192.png", "./icons/icon-512.png", "./icons/apple-touch-icon.png",
   "./fonts/instrument-serif-latin-400-normal.woff2", "./fonts/manrope-latin-400-normal.woff2", "./fonts/manrope-latin-500-normal.woff2",
   "./fonts/manrope-latin-600-normal.woff2", "./fonts/manrope-latin-700-normal.woff2", "./fonts/manrope-latin-800-normal.woff2"];
 self.addEventListener("install", e => { e.waitUntil(caches.open(VERSION).then(c => c.addAll(ASSETS)).then(() => self.skipWaiting())); });
-self.addEventListener("activate", e => { e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== VERSION).map(k => caches.delete(k)))).then(() => self.clients.claim())); });
+self.addEventListener("activate", e => { e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k.startsWith("rb-") && k !== VERSION).map(k => caches.delete(k)))).then(() => self.clients.claim())); });
 self.addEventListener("fetch", e => {
   const req = e.request; const url = new URL(req.url);
   if (req.method !== "GET" || url.origin !== location.origin) return;
