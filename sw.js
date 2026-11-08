@@ -1,5 +1,5 @@
 // Ruby's Base: funciona sin conexión. Sube VERSION en cada actualización.
-const VERSION = "rb-2026-11-08b";
+const VERSION = "rb-2026-11-08c";
 const ASSETS = ["./", "./index.html", "./manifest.webmanifest", "./supabase.js", "./591.supabase.js",
   "./icons/icon-192.png", "./icons/icon-512.png", "./icons/apple-touch-icon.png",
   "./fonts/instrument-serif-latin-400-normal.woff2", "./fonts/manrope-latin-400-normal.woff2", "./fonts/manrope-latin-500-normal.woff2",

@@ -566,15 +566,16 @@ function dayItems(d) {
   st("wake", 0);
   if (weighDay) items.push({ id: "weigh", sec: 0, done: has(doc("body").w) });
   items.push({ id: "whoop", sec: 0, done: !!doc("whoop").days[ds] });
+  // Gimnasio a primera hora; boxeo / Hyrox por la tarde (19:00 o 20:00)
+  if (P.ex.length) items.push({ id: "train", sec: 0, done: exCount(d) === P.ex.length || !!hab(ds).train });
+  if (P.cardio) items.push({ id: "cardio", sec: 0, done: !!hab(ds).cardio });
+  st("post", 0);
   items.push({ id: "des", sec: 0, done: meal(ds, "des") }, { id: "mm", sec: 0, done: meal(ds, "mm") });
   items.push({ id: "water", sec: 0, done: (doc("daily").water[ds] || 0) >= 10 });
-  if (P.ex.length) items.push({ id: "train", sec: 1, done: exCount(d) === P.ex.length || !!hab(ds).train });
-  st("post", 1);
-  if (P.boxing) items.push({ id: "boxing", sec: 1, done: !!hab(ds).boxing });
   st("lunch", 1);
   items.push({ id: "com", sec: 1, done: meal(ds, "com") });
   items.push({ id: "mer", sec: 2, done: meal(ds, "mer") });
-  if (P.cardio) items.push({ id: "cardio", sec: 2, done: !!hab(ds).cardio });
+  if (P.boxing) items.push({ id: "boxing", sec: 2, done: !!hab(ds).boxing });
   st("dinner", 2);
   items.push({ id: "cen", sec: 2, done: meal(ds, "cen") });
   st("night", 2);
@@ -587,10 +588,10 @@ function mealStreak() { let n = 0, d = new Date(TODAY); const all = x => SLOTS.e
 // ================= WHOOP (registro manual) =================
 function whoopForm(pre, e) {
   e = e || {};
-  return `<div class="grid3" style="grid-template-columns:repeat(3,minmax(0,1fr))"><span class="hd">Recuperación %</span><span class="hd">Sueño (h)</span><span class="hd">Esfuerzo ayer</span>
+  return `<div class="grid3" style="grid-template-columns:repeat(3,minmax(0,1fr))"><span class="hd">Recuperación %</span><span class="hd">Sueño %</span><span class="hd">Strain</span>
     <input id="${pre}-rec" aria-label="Recuperación en %" type="number" inputmode="numeric" min="0" max="100" placeholder="%" value="${e.rec ?? ""}">
-    <input id="${pre}-sleep" aria-label="Horas de sueño" type="number" inputmode="decimal" step="0.1" min="0" max="16" placeholder="h" value="${e.sleep ?? ""}">
-    <input id="${pre}-strain" aria-label="Esfuerzo de ayer" type="number" inputmode="decimal" step="0.1" min="0" max="21" placeholder="0–21" value="${e.strain ?? ""}"></div>`;
+    <input id="${pre}-sleep" aria-label="Sueño en %" type="number" inputmode="numeric" step="1" min="0" max="100" placeholder="%" value="${e.sleep ?? ""}">
+    <input id="${pre}-strain" aria-label="Strain" type="number" inputmode="decimal" step="0.1" min="0" max="21" placeholder="0–21" value="${e.strain ?? ""}"></div>`;
 }
 function readWhoop(pre) {
   const n = id => { const v = parseFloat(String(document.getElementById(pre + "-" + id).value).replace(",", ".")); return isNaN(v) ? null : v; };
@@ -614,8 +615,8 @@ function whoopSection() {
   const pts = k => last.filter(d => days[d][k] !== null && days[d][k] !== undefined).map(d => [d, +days[d][k]]);
   const miss = missingWhoop(TODAY, TODAY); const first = miss[0] || TODAYISO;
   let h = `<h2 class="big">WHOOP</h2><div class="pcard"><h3>Media de los últimos 7 días</h3><div class="kv" style="grid-template-columns:repeat(3,minmax(0,1fr))">` +
-    [["Recuperación", avg("rec", 7), " %"], ["Sueño", avg("sleep", 7), " h"], ["Esfuerzo", avg("strain", 7), ""]].map(([l, v, u]) => `<div><small>${l}</small><b>${v === null ? "–" : nf1.format(v) + u}</b></div>`).join("") + `</div>`;
-  [["Recuperación (%)", "rec"], ["Sueño (h)", "sleep"], ["Esfuerzo", "strain"]].forEach(([l, k]) => { const p = pts(k); if (p.length >= 2) h += `<p class="sub" style="margin-top:12px"><b>${l}</b></p>` + chart(p, avg(k, 30), l); });
+    [["Recuperación", avg("rec", 7), " %"], ["Sueño", avg("sleep", 7), " %"], ["Strain", avg("strain", 7), ""]].map(([l, v, u]) => `<div><small>${l}</small><b>${v === null ? "–" : nf1.format(v) + u}</b></div>`).join("") + `</div>`;
+  [["Recuperación (%)", "rec"], ["Sueño (%)", "sleep"], ["Strain", "strain"]].forEach(([l, k]) => { const p = pts(k); if (p.length >= 2) h += `<p class="sub" style="margin-top:12px"><b>${l}</b></p>` + chart(p, avg(k, 30), l); });
   h += `<h3 style="margin-top:14px">Días sin registrar en ${MONTHS[TODAY.getMonth()]}</h3>` + (miss.length ? `<div class="chips">${miss.map(d => `<button type="button" class="chip" data-wdate="${d}" aria-pressed="${d === (ui.whoopDate || first)}">${shortDate(d)}</button>`).join("")}</div>` : `<p class="sub" style="margin:0">Ninguno, todo al día.</p>`);
   h += `<div style="margin-top:12px;display:grid;gap:8px"><label class="tag" for="wp-date">Fecha</label><input id="wp-date" type="date" value="${ui.whoopDate || first}" style="background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:9px 10px;color:var(--ink)">${whoopForm("wp", days[ui.whoopDate || first])}<button class="btn solid" data-act="save-whoop" data-pre="wp">Guardar este día</button></div></div>`;
   return h;
@@ -656,7 +657,7 @@ function itemHTML(d, it) {
     more = `<div class="inline"><input id="in-waist" type="number" inputmode="decimal" step="0.5" placeholder="cm" aria-label="Cintura en cm" value="${e ? e.cm : ""}"><button class="btn solid" data-act="save-waist">Guardar</button></div>`;
   } else if (it.id === "whoop") {
     const e = doc("whoop").days[ds];
-    tile = tileIc("whoop"); tag = "WHOOP"; ttl = "Recuperación, sueño y esfuerzo"; det = e ? `${e.rec ?? "–"} % · ${e.sleep ? nf1.format(e.sleep) : "–"} h · esfuerzo ${e.strain ? nf1.format(e.strain) : "–"}` : "Copia los 3 números de la app de WHOOP";
+    tile = tileIc("whoop"); tag = "WHOOP"; ttl = "Recuperación, sueño y strain"; det = e ? `Recuperación ${e.rec ?? "–"} % · sueño ${e.sleep ?? "–"} % · strain ${e.strain ? nf1.format(e.strain) : "–"}` : "Copia los 3 números de la app de WHOOP";
     more = whoopForm("wh", e) + `<button class="btn solid" data-act="save-whoop" data-pre="wh" data-wd="${ds}">Guardar</button>`;
   } else if (it.id === "water") {
     const w = doc("daily").water[ds] || 0;
@@ -670,7 +671,7 @@ function itemHTML(d, it) {
       `<label for="note-${ds}" class="tag">Sensaciones de la sesión</label><textarea id="note-${ds}" data-note="${P.key}" rows="2" placeholder="Energía, molestias, si te costó o te sobró">${(doc("w-" + isoWeek(d)).notes[P.key] || "").replace(/</g, "&lt;")}</textarea>`;
   } else if (it.id === "boxing" || it.id === "cardio") {
     const isB = it.id === "boxing", h = hab(ds);
-    tile = tileIc(it.id); tag = isB ? "Entreno" : "Cardio"; ttl = isB ? "Boxeo / Hyrox" : "Cardio moderado"; det = (h[it.id + "Min"] ? h[it.id + "Min"] + " min apuntados" : isB ? "Tu sesión de la semana" : "20–30 min · caminata, bici o elíptica");
+    tile = tileIc(it.id); tag = isB ? "Entreno" : "Cardio"; ttl = isB ? "Boxeo / Hyrox" : "Cardio moderado"; det = (h[it.id + "Min"] ? h[it.id + "Min"] + " min apuntados" : isB ? "Por la tarde, a las 19:00 o 20:00" : "20–30 min · caminata, bici o elíptica");
     more = `<button type="button" class="fig" data-fig="${isB ? "boxing" : "cardio"}" aria-label="Demostración, toca para pausar" style="max-width:180px"><svg viewBox="0 -24 220 202" aria-hidden="true"></svg></button>${isB ? "" : `<p class="prep">${CARDIO_TXT}</p>`}<div class="inline"><input id="in-${it.id}" type="number" inputmode="numeric" placeholder="Minutos" aria-label="Minutos" value="${h[it.id + "Min"] || ""}"><button class="btn solid" data-act="save-min" data-k="${it.id}">Guardar</button></div>`;
   }
   return `<div class="item${it.done ? " done" : ""}"><div class="row"><button type="button" class="open" data-open="${it.id}" aria-expanded="${open}">${tile}<span style="flex:1;min-width:0"><span class="tag">${tag}</span><div class="ttl">${ttl}</div><div class="det">${det}</div>${extra}</span></button><button type="button" class="chk" data-check="${it.id}" aria-pressed="${it.done}" aria-label="Marcar ${ttl} como hecho">${CHECK}</button></div>${open ? `<div class="more">${more}</div>` : ""}</div>`;
