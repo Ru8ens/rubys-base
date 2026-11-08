@@ -507,7 +507,7 @@ document.getElementById("lg-up").addEventListener("click", async () => {
   const msg = document.getElementById("lg-msg"), email = document.getElementById("lg-email").value.trim(), password = document.getElementById("lg-pass").value;
   if (!email || password.length < 6) { msg.textContent = "Escribe tu email y una contraseña de al menos 6 caracteres."; return; }
   msg.textContent = "Creando la cuenta…";
-  const { data, error } = await sb.auth.signUp({ email, password, options: { emailRedirectTo: location.origin } });
+  const { data, error } = await sb.auth.signUp({ email, password, options: { emailRedirectTo: location.origin + location.pathname } });
   if (error) msg.textContent = authErr(error);
   else if (data.session) enter(data.user);
   else msg.textContent = "Te hemos enviado un email. Abre el enlace para confirmar la cuenta y vuelve aquí a tocar Entrar.";
