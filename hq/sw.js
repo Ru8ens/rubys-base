@@ -1,5 +1,5 @@
 // Ruby's HQ: works offline. Bump VERSION on every update.
-const VERSION = "hq-2026-11-08a";
+const VERSION = "hq-2026-11-09a";
 const ASSETS = ["./", "./index.html", "./manifest.webmanifest", "../supabase.js", "../591.supabase.js",
   "./icons/icon-192.png", "./icons/icon-512.png", "./icons/apple-touch-icon.png",
   "./fonts/inter-latin-400-normal.woff2", "./fonts/inter-latin-500-normal.woff2", "./fonts/inter-latin-600-normal.woff2", "./fonts/inter-latin-700-normal.woff2"];

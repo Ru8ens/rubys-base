@@ -234,7 +234,15 @@ const parse = s => { const [y, m, d] = s.split("-").map(Number); return new Date
 const addDays = (d, n) => { const x = new Date(d); x.setDate(x.getDate() + n); return x; };
 let NOW = new Date(); let TODAY = iso(NOW);
 const ym = d => d.getFullYear() + "-" + pad(d.getMonth() + 1);
-const num = v => { if (v === "" || v == null) return null; const n = parseFloat(String(v).replace(/\s/g, "").replace(/,(\d{1,2})$/, ".$1").replace(/,/g, "")); return isFinite(n) ? n : null; };
+// Reads 3250.40, 3,250.40, 3.250,40, 3250,40 and 3.250 the way a person means them.
+function num(v) {
+  if (v === "" || v == null) return null; let x = String(v).replace(/[\s€$£]/g, "");
+  const lc = x.lastIndexOf(","), ld = x.lastIndexOf(".");
+  if (lc > -1 && ld > -1) { if (lc > ld) x = x.replace(/\./g, "").replace(",", "."); else x = x.replace(/,/g, ""); }
+  else if (lc > -1) x = /,\d{3}$/.test(x) && !/,\d{1,2}$/.test(x) && (x.match(/,/g) || []).length >= 1 && x.split(",")[0].length <= 3 && /^-?\d{1,3}(,\d{3})+$/.test(x) ? x.replace(/,/g, "") : x.replace(/,/g, ".");
+  else if (ld > -1 && /^-?\d{1,3}(\.\d{3})+$/.test(x)) x = x.replace(/\./g, "");
+  const n = parseFloat(x); return isFinite(n) ? n : null;
+}
 function money(n, cur = "EUR", opts = {}) {
   const neg = n < 0; n = Math.abs(n || 0);
   const s = n.toLocaleString("en-GB", { minimumFractionDigits: opts.whole ? 0 : 2, maximumFractionDigits: opts.whole ? 0 : 2 });
@@ -263,7 +271,8 @@ function doc(name) { if (!D[name]) D[name] = BLANK[name](); const b = BLANK[name
 const cacheKey = () => "rubyshq-cache-" + (USER ? USER.id : "anon");
 function cacheSave() { try { localStorage.setItem(cacheKey(), JSON.stringify({ D, dirty: [...dirty] })); } catch (e) {} }
 function cacheLoad() { try { const c = JSON.parse(localStorage.getItem(cacheKey()) || "null"); if (c) { Object.assign(D, c.D || {}); (c.dirty || []).forEach(n => dirty.add(n)); } } catch (e) {} }
-function save(name) { dirty.add(name); cacheSave(); clearTimeout(flushTimer); flushTimer = setTimeout(flush, 500); }
+let lastEdit = 0; const sheetOpen = () => document.getElementById("sheet").classList.contains("show");
+function save(name) { lastEdit = Date.now(); dirty.add(name); cacheSave(); clearTimeout(flushTimer); flushTimer = setTimeout(flush, 500); }
 let flushing = false;
 async function flush() {
   if (!USER || !dirty.size || flushing) return;
@@ -281,6 +290,7 @@ async function pull() {
   if (dirty.size) await flush();
   const { data, error } = await sb.from("docs").select("name,data").like("name", "hq-%");
   if (error) { syncState = "Offline: showing what's saved on this phone"; return; }
+  if (sheetOpen() || Date.now() - lastEdit < 4000 || dirty.size) return; // never overwrite an edit in progress
   (data || []).forEach(r => { if (!dirty.has(r.name)) D[r.name] = r.data; });
   cacheSave(); syncState = "Synced";
   if (!document.activeElement || !document.activeElement.matches("input, textarea, select")) render();
