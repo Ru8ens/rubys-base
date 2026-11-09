@@ -591,7 +591,7 @@ function whoopForm(pre, e) {
   return `<div class="grid3" style="grid-template-columns:repeat(3,minmax(0,1fr))"><span class="hd">Recuperación %</span><span class="hd">Sueño %</span><span class="hd">Strain</span>
     <input id="${pre}-rec" aria-label="Recuperación en %" type="number" inputmode="numeric" min="0" max="100" placeholder="%" value="${e.rec ?? ""}">
     <input id="${pre}-sleep" aria-label="Sueño en %" type="number" inputmode="numeric" step="1" min="0" max="100" placeholder="%" value="${e.sleep ?? ""}">
-    <input id="${pre}-strain" aria-label="Strain" type="number" inputmode="decimal" step="0.1" min="0" max="21" placeholder="0–21" value="${e.strain ?? ""}"></div>`;
+    <input id="${pre}-strain" aria-label="Strain" type="text" inputmode="decimal" min="0" max="21" placeholder="0–21" value="${e.strain != null ? String(e.strain).replace(".", ",") : ""}"></div>`;
 }
 function readWhoop(pre) {
   const n = id => { const v = parseFloat(String(document.getElementById(pre + "-" + id).value).replace(",", ".")); return isNaN(v) ? null : v; };
@@ -650,11 +650,11 @@ function itemHTML(d, it) {
   } else if (it.id === "weigh") {
     const e = doc("body").w.find(x => x.date === ds);
     tile = tileIc("weigh"); tag = "Hábito"; ttl = "Pesarse en ayunas"; det = e ? nf1.format(e.kg) + " kg apuntado" : "Después del baño y antes de desayunar";
-    more = `<div class="inline"><input id="in-weigh" type="number" inputmode="decimal" step="0.1" placeholder="kg" aria-label="Peso en kg" value="${e ? e.kg : ""}"><button class="btn solid" data-act="save-weigh">Guardar</button></div>`;
+    more = `<div class="inline"><input id="in-weigh" type="text" inputmode="decimal" autocomplete="off" placeholder="kg" aria-label="Peso en kg" value="${e ? String(e.kg).replace(".", ",") : ""}"><button class="btn solid" data-act="save-weigh">Guardar</button></div>`;
   } else if (it.id === "waist") {
     const e = doc("body").waist.find(x => x.date === ds);
     tile = tileIc("waist"); tag = "Hábito semanal"; ttl = "Medir la cintura"; det = e ? nf1.format(e.cm) + " cm apuntado" : "Mismo punto, sin apretar la cinta";
-    more = `<div class="inline"><input id="in-waist" type="number" inputmode="decimal" step="0.5" placeholder="cm" aria-label="Cintura en cm" value="${e ? e.cm : ""}"><button class="btn solid" data-act="save-waist">Guardar</button></div>`;
+    more = `<div class="inline"><input id="in-waist" type="text" inputmode="decimal" autocomplete="off" placeholder="cm" aria-label="Cintura en cm" value="${e ? String(e.cm).replace(".", ",") : ""}"><button class="btn solid" data-act="save-waist">Guardar</button></div>`;
   } else if (it.id === "whoop") {
     const e = doc("whoop").days[ds];
     tile = tileIc("whoop"); tag = "WHOOP"; ttl = "Recuperación, sueño y strain"; det = e ? `Recuperación ${e.rec ?? "–"} % · sueño ${e.sleep ?? "–"} % · strain ${e.strain ? nf1.format(e.strain) : "–"}` : "Copia los 3 números de la app de WHOOP";
@@ -684,7 +684,7 @@ function exHTML(d, j) {
   for (let k = 0; k < n; k++) {
     const c = cur[k] || {}, p = prev[k] || {}, id = key.replace(/\|/g, "-") + "-" + k;
     rows += `<button type="button" class="setbtn" data-set="${key}" data-k="${k}" aria-pressed="${!!c.d}" aria-label="${e[4]}, serie ${k + 1}">${c.d ? "✓" : k + 1}</button>` +
-      (x.kg ? `<input id="kg-${id}" aria-label="Kg serie ${k + 1}" data-f="kg" data-set="${key}" data-k="${k}" type="number" inputmode="decimal" step="0.5" min="0" placeholder="${p.kg || "kg"}" value="${c.kg ?? ""}">` : `<span></span>`) +
+      (x.kg ? `<input id="kg-${id}" aria-label="Kg serie ${k + 1}" data-f="kg" data-set="${key}" data-k="${k}" type="text" inputmode="decimal" autocomplete="off" placeholder="${p.kg ? String(p.kg).replace(".", ",") : "kg"}" value="${c.kg != null ? String(c.kg).replace(".", ",") : ""}">` : `<span></span>`) +
       `<input id="r-${id}" aria-label="${unit} serie ${k + 1}" data-f="r" data-set="${key}" data-k="${k}" type="number" inputmode="numeric" min="0" placeholder="${p.r || unit}" value="${c.r ?? ""}">`;
   }
   return `<div class="ex"><button type="button" class="exhead" data-open="ex${j}" aria-expanded="${open}"><b>${e[4]}</b><span class="${done ? "ok" : ""}">${done ? "Hecho ✓" : (n !== e[1] ? n + " (descarga)" : n) + " × " + e[2]}</span></button>${open ? `<div class="exbody"><button type="button" class="fig" data-fig="${e[0]}" aria-label="Demostración de ${e[4]}, toca para pausar"><svg viewBox="0 -24 220 202" aria-hidden="true"></svg></button><div><p class="cue">${x.cue}</p><div class="grid3">${rows}</div>${e[3] ? `<div class="rests">${e[3].map(r => `<button type="button" class="btn ghost" data-rest="${r}">Descanso ${r} s</button>`).join("")}</div>` : ""}</div></div>` : ""}</div>`;
@@ -801,12 +801,12 @@ function renderProgress() {
     (cw ? `<div class="big">${nf1.format(cw[1])} kg</div><p class="sub" style="margin:4px 0 0">${cw[2]} pesaje${cw[2] > 1 ? "s" : ""} · ${delta(cw[1], START.peso, "kg")}${pw ? ` · semana pasada ${nf1.format(pw[1])} kg` : ""}</p>` : `<p class="sub">Aún no hay pesajes esta semana.</p>`) +
     `<p class="sub" style="margin-top:8px">Pésate 3 o 4 mañanas por semana, después de ir al baño y antes de desayunar. Cuenta la media semanal, no un dato suelto.</p>` +
     chart(ws.map(x => [x.date, +x.kg]), START.peso, "kg") +
-    `<div class="addrow"><input id="w-date" type="date" value="${TODAYISO}" aria-label="Fecha del pesaje"><input id="w-kg" type="number" inputmode="decimal" step="0.1" placeholder="kg" aria-label="Peso en kg"><button class="btn solid" data-act="add-weight">Añadir</button></div>` +
+    `<div class="addrow"><input id="w-date" type="date" value="${TODAYISO}" aria-label="Fecha del pesaje"><input id="w-kg" type="text" inputmode="decimal" autocomplete="off" placeholder="kg" aria-label="Peso en kg"><button class="btn solid" data-act="add-weight">Añadir</button></div>` +
     ws.slice(-8).reverse().map(x => `<div class="logrow"><span>${shortDate(x.date)}</span><span><b>${nf1.format(x.kg)} kg</b> <button data-act="del-weight" data-id="${x.id}" aria-label="Borrar pesaje">×</button></span></div>`).join("") + `</div>`;
   h += `<h2>Cintura</h2><div class="card pcard"><h3>Última medida</h3>` +
     (lastWaist ? `<div class="big">${nf1.format(lastWaist.cm)} cm</div><p class="sub" style="margin:4px 0 0">${shortDate(lastWaist.date)} · ${delta(+lastWaist.cm, START.cintura, "cm")}</p>` : `<p class="sub">Aún no hay medidas.</p>`) +
     `<p class="sub" style="margin-top:8px">Una vez por semana, en el mismo punto y sin apretar la cinta.</p>` + chart(wa.map(x => [x.date, +x.cm]), START.cintura, "cm") +
-    `<div class="addrow"><input id="c-date" type="date" value="${TODAYISO}" aria-label="Fecha de la medida"><input id="c-cm" type="number" inputmode="decimal" step="0.5" placeholder="cm" aria-label="Cintura en cm"><button class="btn solid" data-act="add-waist">Añadir</button></div>` +
+    `<div class="addrow"><input id="c-date" type="date" value="${TODAYISO}" aria-label="Fecha de la medida"><input id="c-cm" type="text" inputmode="decimal" autocomplete="off" placeholder="cm" aria-label="Cintura en cm"><button class="btn solid" data-act="add-waist">Añadir</button></div>` +
     wa.slice(-6).reverse().map(x => `<div class="logrow"><span>${shortDate(x.date)}</span><span><b>${nf1.format(x.cm)} cm</b> <button data-act="del-waist" data-id="${x.id}" aria-label="Borrar medida">×</button></span></div>`).join("") + `</div>`;
   h += `<h2>Cargas</h2><div class="card pcard"><p class="sub" style="margin-top:0">Mejor serie de cada semana (kg × reps), sacada de lo que apuntas en Entreno.</p>`;
   if (history === null) h += `<p class="sub">Cargando…</p>`;
@@ -888,14 +888,30 @@ requestAnimationFrame(loop);
 
 
 // ================= Temporizador =================
-let tInt = null;
-function startRest(sec) {
-  clearInterval(tInt); let left = sec; const el = document.getElementById("timer"), out = document.getElementById("tleft");
-  const show = () => { out.textContent = Math.floor(left / 60) + ":" + pad(left % 60); };
-  el.classList.add("on"); show();
-  tInt = setInterval(() => { left--; if (left <= 0) { clearInterval(tInt); out.textContent = "¡Vamos!"; setTimeout(() => el.classList.remove("on"), 2500); return; } show(); }, 1000);
+let tInt = null, tEnd = 0, actx = null, beepNodes = [];
+function beepsAt(when) {
+  try { actx = actx || new (window.AudioContext || window.webkitAudioContext)(); if (actx.state === "suspended") actx.resume();
+    beepNodes.forEach(o => { try { o.stop(); } catch (e) {} }); beepNodes = [];
+    [0, 0.35, 0.7].forEach((d, i) => { const o = actx.createOscillator(), g = actx.createGain(); o.type = "sine"; o.frequency.value = i === 2 ? 1320 : 880;
+      const t0 = actx.currentTime + when + d; g.gain.setValueAtTime(0.0001, t0); g.gain.exponentialRampToValueAtTime(0.5, t0 + 0.02); g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.28);
+      o.connect(g).connect(actx.destination); o.start(t0); o.stop(t0 + 0.3); beepNodes.push(o); });
+  } catch (e) {}
 }
-document.getElementById("tstop").addEventListener("click", () => { clearInterval(tInt); document.getElementById("timer").classList.remove("on"); });
+function restDone() {
+  clearInterval(tInt); tEnd = 0; const el = document.getElementById("timer"); document.getElementById("tleft").textContent = "¡Vamos!";
+  if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
+  if ("Notification" in window && Notification.permission === "granted" && navigator.serviceWorker) navigator.serviceWorker.ready.then(r => r.showNotification("Descanso terminado", { body: "A por la siguiente serie", tag: "rest", icon: "icons/icon-192.png", renotify: true })).catch(() => {});
+  setTimeout(() => el.classList.remove("on"), 3000);
+}
+function startRest(sec) {
+  clearInterval(tInt); tEnd = Date.now() + sec * 1000; const el = document.getElementById("timer"), out = document.getElementById("tleft");
+  if ("Notification" in window && Notification.permission === "default") Notification.requestPermission().catch(() => {});
+  beepsAt(sec);
+  const tick = () => { const left = Math.ceil((tEnd - Date.now()) / 1000); if (left <= 0) { restDone(); return; } out.textContent = Math.floor(left / 60) + ":" + pad(left % 60); };
+  el.classList.add("on"); tick(); tInt = setInterval(tick, 250);
+}
+document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible" && tEnd && Date.now() >= tEnd) restDone(); });
+document.getElementById("tstop").addEventListener("click", () => { clearInterval(tInt); tEnd = 0; beepNodes.forEach(o => { try { o.stop(); } catch (e) {} }); beepNodes = []; document.getElementById("timer").classList.remove("on"); });
 
 // ================= Pintar y eventos =================
 const TABS = [["hoy", "Hoy", '<path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/>'], ["plan", "Plan", '<rect x="4" y="5" width="16" height="16" rx="2"/><path d="M8 3v4M16 3v4M4 10h16"/>'], ["compra", "Compra", '<path d="M4 5h2l2 11h10l2-8H7"/><circle cx="9" cy="20" r="1"/><circle cx="17" cy="20" r="1"/>'], ["progreso", "Progreso", '<path d="M4 19l5-6 4 3 7-9"/>']];
@@ -966,7 +982,7 @@ document.getElementById("main").addEventListener("click", ev => {
 });
 document.getElementById("main").addEventListener("change", ev => {
   const t = ev.target;
-  if (t.dataset.f) { const c = setCell(t.dataset.set, +t.dataset.k); c[t.dataset.f] = t.value; save("w-" + isoWeek(sel)); }
+  if (t.dataset.f) { const c = setCell(t.dataset.set, +t.dataset.k); c[t.dataset.f] = t.dataset.f === "kg" ? t.value.replace(",", ".").replace(/[^\d.]/g, "") : t.value; save("w-" + isoWeek(sel)); }
   if (t.dataset.note) { doc("w-" + isoWeek(sel)).notes[t.dataset.note] = t.value; save("w-" + isoWeek(sel)); }
   if (t.id === "wp-date") { ui.whoopDate = t.value; render(); return; }
   if (t.id === "sh-from" || t.id === "sh-to") { ui.shopFrom = document.getElementById("sh-from").value; ui.shopTo = document.getElementById("sh-to").value; if (ui.shopTo < ui.shopFrom) ui.shopTo = ui.shopFrom; saveUi(); render(); }
