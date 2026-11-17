@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#f2eee7">
+<script>(function(){try{var q=location.search,t=/theme=pink/.test(q)?"pink":/theme=normal/.test(q)?"":localStorage.getItem("rb-theme")||"";localStorage.setItem("rb-theme",t);if(t)document.documentElement.classList.add(t);}catch(e){}})();</script>
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -21,6 +22,11 @@
 @font-face{font-family:'Manrope';src:url('fonts/manrope-latin-700-normal.woff2') format('woff2');font-weight:700;font-display:swap}
 @font-face{font-family:'Manrope';src:url('fonts/manrope-latin-800-normal.woff2') format('woff2');font-weight:800;font-display:swap}
 /* Ruby's Base. Idea: un día como lista de tareas (comer, entrenar, hábitos) sobre índigo profundo, con aqua para lo hecho. */
+/* Test theme: open the app with ?theme=pink (and ?theme=normal to go back) */
+html.pink {
+  --bg: #fbeff3; --surf: #fffafc; --surf2: #f8e6ec; --line: #f0d9e1; --ink: #2a1a21; --muted: #8a6a76;
+  --aqua: #c2447a; --violet: #a0346a; --butter: #ffd1e1; --fig: #c2447a; --fig-back: #f2bfd3; --prop: #ecd3dc; --accent: #c2447a;
+}
 :root {
   /* Premium suave: tonos cálidos claros, tarjetas flotantes, verde oliva para lo hecho */
   --bg: #f2eee7;
