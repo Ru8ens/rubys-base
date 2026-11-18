@@ -303,8 +303,10 @@ function cacheLoad() { try { const c = JSON.parse(localStorage.getItem(cacheKey(
 let lastEdit = 0; const sheetOpen = () => document.getElementById("sheet").classList.contains("show");
 function save(name) { lastEdit = Date.now(); dirty.add(name); cacheSave(); clearTimeout(flushTimer); flushTimer = setTimeout(flush, 500); }
 let flushing = false;
+let pulledOnce = false; // never send anything up before this device has loaded what's already saved
+const itemCount = d => d && typeof d === "object" ? Object.entries(d).reduce((n, [k, v]) => n + (Array.isArray(v) && k !== "cardList" ? v.length : 0), 0) : 0;
 async function flush() {
-  if (!USER || !dirty.size || flushing) return;
+  if (!USER || !dirty.size || flushing || !pulledOnce) return;
   if (!navigator.onLine) { syncState = "Offline: saved on this phone, will sync later"; return; }
   flushing = true; const names = [...dirty]; dirty.clear();
   const rows = names.map(n => ({ user_id: USER.id, name: n, data: D[n], updated_at: new Date().toISOString() }));
@@ -316,12 +318,18 @@ async function flush() {
 }
 async function pull() {
   if (!USER) return;
-  if (dirty.size) await flush();
+  if (pulledOnce && dirty.size) await flush();
   const { data, error } = await sb.from("docs").select("name,data").like("name", "hq-%");
   if (error) { syncState = "Offline: showing what's saved on this phone"; return; }
-  if (sheetOpen() || Date.now() - lastEdit < 4000 || dirty.size) return; // never overwrite an edit in progress
-  (data || []).forEach(r => { if (!dirty.has(r.name)) D[r.name] = r.data; });
-  cacheSave(); syncState = "Synced";
+  if (pulledOnce && (sheetOpen() || Date.now() - lastEdit < 4000 || dirty.size)) return; // never overwrite an edit in progress
+  (data || []).forEach(r => {
+    if (dirty.has(r.name)) return;
+    const local = D[r.name];
+    // Safety net: if the saved copy has been emptied but this device still has the data, keep this device's copy and restore it.
+    if (!r.name.startsWith("hq-img-") && local && itemCount(r.data) === 0 && itemCount(local) > 0) { dirty.add(r.name); return; }
+    D[r.name] = r.data;
+  });
+  pulledOnce = true; cacheSave(); syncState = "Synced"; if (dirty.size) flush();
   if (!document.activeElement || !document.activeElement.matches("input, textarea, select")) render();
 }
 window.addEventListener("online", () => { flush(); pull(); });
@@ -352,6 +360,7 @@ function totals() {
 }
 function monthChange(nw) {
   const m = doc("hq-money"), k = ym(NOW);
+  if (!pulledOnce) return null;
   if (m.snap[k] == null) { m.snap[k] = Math.round(nw * 100) / 100; save("hq-money"); return null; }
   const c = nw - m.snap[k]; return Math.abs(c) < 0.01 ? null : c;
 }
@@ -420,7 +429,7 @@ function photoSheet(k, label) {
 // ================= Book covers (Open Library, free) =================
 let coverBusy = false;
 async function fetchCovers() {
-  if (coverBusy) return; const g = doc("hq-growth"); const todo = g.books.filter(b => b.cover === undefined).slice(0, 12); if (!todo.length) return;
+  if (coverBusy || !pulledOnce) return; const g = doc("hq-growth"); const todo = g.books.filter(b => b.cover === undefined).slice(0, 12); if (!todo.length) return;
   coverBusy = true; let changed = false;
   for (const b of todo) {
     try { const r = await fetch("https://openlibrary.org/search.json?q=" + encodeURIComponent(b.t) + "&limit=1&fields=cover_i,author_name"); const j = await r.json(); const d = (j.docs || [])[0] || {};
@@ -875,7 +884,7 @@ $("#file").addEventListener("change", async e => {
 
 // ================= Auth =================
 function enter(user) {
-  USER = user; for (const k in D) delete D[k]; dirty.clear(); cacheLoad();
+  USER = user; pulledOnce = false; for (const k in D) delete D[k]; dirty.clear(); cacheLoad();
   $("#login").classList.add("hidden"); $("#app").classList.remove("hidden"); $("#tab").classList.remove("hidden");
   render(); pull(); loadFx();
 }
@@ -897,7 +906,7 @@ async function start() {
 // Demo mode for previews only: index.html?demo loads a local file without signing in.
 if (location.search.includes("demo")) {
   USER = { id: "demo", email: "demo@preview" };
-  fetch(new URLSearchParams(location.search).get("demo") || "demo.json").then(r => r.json()).then(j => { Object.assign(D, j.docs); flush = async () => {}; $("#login").classList.add("hidden"); $("#app").classList.remove("hidden"); $("#tab").classList.remove("hidden"); render(); }).catch(() => {});
+  fetch(new URLSearchParams(location.search).get("demo") || "demo.json").then(r => r.json()).then(j => { Object.assign(D, j.docs); pulledOnce = true; flush = async () => {}; $("#login").classList.add("hidden"); $("#app").classList.remove("hidden"); $("#tab").classList.remove("hidden"); render(); }).catch(() => {});
 } else start();
 if ("serviceWorker" in navigator && !location.search.includes("demo")) navigator.serviceWorker.register("sw.js");
 </script>
