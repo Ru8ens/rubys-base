@@ -150,6 +150,34 @@ svg{display:block}
 .state{font-size:12px;font-weight:700;padding:6px 10px;border-radius:99px;flex:none}
 .s0{background:#f0f0ed;color:var(--sub)} .s1{background:var(--blue-soft);color:var(--blue)} .s2{background:#e7f5ee;color:var(--green)}
 .copy{font-size:12px;font-weight:600;color:var(--blue);background:var(--blue-soft);padding:5px 9px;border-radius:9px}
+/* photos */
+.ptile{position:relative;height:150px;border-radius:20px;overflow:hidden;background:#cfd3d8 center/cover no-repeat;color:#fff;text-align:left;padding:14px;display:flex;flex-direction:column;justify-content:flex-end;box-shadow:0 6px 16px #0002}
+.ptile:before{content:"";position:absolute;inset:0;background:linear-gradient(180deg,#0000 30%,#000b)}
+.ptile>*{position:relative} .ptile b{font-size:17px;letter-spacing:-.02em} .ptile small{font-size:12.5px;font-weight:600;opacity:.92}
+.banner{position:relative;height:190px;border-radius:24px;overflow:hidden;background:#cfd3d8 center/cover no-repeat;color:#fff;padding:18px 20px;display:flex;flex-direction:column;justify-content:flex-end;margin:4px 0 16px;box-shadow:0 10px 24px #0002}
+.banner:before{content:"";position:absolute;inset:0;background:linear-gradient(180deg,#0002 20%,#000b)}
+.banner>*{position:relative} .banner .bt{font-size:32px;font-weight:700;letter-spacing:-.03em;line-height:1.05} .banner .bs{font-size:13.5px;font-weight:600;opacity:.92;margin-top:4px}
+.chgph{position:absolute!important;top:12px;right:12px;background:#0006;color:#fff;border-radius:99px;padding:7px 11px;font-size:12px;font-weight:600;display:flex;gap:6px;align-items:center;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+/* books */
+.books{display:grid;grid-template-columns:repeat(3,1fr);gap:16px 12px;margin-top:14px}
+.bk{text-align:left}
+.cv{aspect-ratio:2/3;border-radius:8px;background:#ddd center/cover no-repeat;box-shadow:0 6px 14px #0003;display:block;width:100%;overflow:hidden}
+.cvf{width:100%;height:100%;display:flex;flex-direction:column;justify-content:space-between;padding:10px 9px;color:#fff;font-size:12.5px;font-weight:700;line-height:1.2;text-align:left;letter-spacing:-.01em}
+.cvf small{font-size:10px;opacity:.75;font-weight:600}
+.bk b{display:block;font-size:12.5px;margin:8px 0 5px;line-height:1.25;max-height:31px;overflow:hidden}
+/* wallet */
+.wallet{position:relative;margin-top:6px}
+.wc{position:absolute;left:0;right:0;width:100%;height:200px;display:flex;flex-direction:column;justify-content:flex-start;border-radius:18px;padding:16px 18px;box-shadow:0 -3px 12px #0000001f,0 10px 20px #0000001a;text-align:left;background-size:cover;background-position:center;overflow:hidden}
+.wc.pic:before{content:"";position:absolute;inset:0;background:linear-gradient(180deg,#0008,#0000 45%)}
+.wc>*{position:relative}
+.wh{display:flex;justify-content:space-between;align-items:center;gap:10px;width:100%}.wh b{font-size:13px;letter-spacing:.14em;text-transform:uppercase}.wh span{font-size:12px;font-weight:700;flex:none}
+.wp{font-size:12.5px;font-weight:600;opacity:.85;margin-top:5px}
+.wopen{position:relative;border-radius:20px;padding:18px 20px;min-height:210px;box-shadow:0 14px 28px #0000002e;margin-bottom:14px;background-size:cover;background-position:center;overflow:hidden}
+.wopen.pic:before{content:"";position:absolute;inset:0;background:linear-gradient(180deg,#0009,#0003 50%,#0009)}
+.wopen>*{position:relative}
+.wnum{font-size:24px;font-weight:700;letter-spacing:.06em;margin:26px 0 4px;font-variant-numeric:tabular-nums}
+.wact{display:flex;gap:8px;margin-top:16px;flex-wrap:wrap}
+.wact button{background:#ffffff2e;color:inherit;border-radius:10px;padding:8px 12px;font-size:13px;font-weight:600;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
 .streak{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:700;color:#b45309;background:#fff4e0;padding:6px 10px;border-radius:99px}
 </style>
 </head>
@@ -178,6 +206,7 @@ svg{display:block}
 <div class="sheet" id="sheet"></div>
 <div class="toast" id="toast"></div>
 <input type="file" id="file" accept=".json,application/json" class="hidden">
+<input type="file" id="imgfile" accept="image/*" class="hidden">
 <script src="../supabase.js"></script>
 <script>
 "use strict";
@@ -369,6 +398,55 @@ function taskRow(t, opts = {}) {
     <button class="star ${t.star ? "on" : ""}" data-act="tstar" data-id="${t.id}">${icStar(18)}</button></div>`;
 }
 
+// ================= Photos =================
+const PHOTO = { tasks: "1522202176988-66273c2fd55f", money: "1539037116277-4db20889f2d4", growth: "1481627834876-b7833e8f5570", people: "1529156069898-49953e39b3ac", wish: "1523170335258-f5ed11844a49", members: "1436491865332-7a61a109cc05" };
+const imgOf = k => (D["hq-img-" + k] && D["hq-img-" + k].d) || (PHOTO[k] ? `https://images.unsplash.com/photo-${PHOTO[k]}?w=900&q=70&auto=format` : "");
+const bg = k => { const u = imgOf(k); return u ? `background-image:url('${u}')` : ""; };
+const banner = (k, title, sub) => `<div class="banner" style="${bg(k)}"><button class="chgph" data-act="photo" data-k="${k}">${ic("cal", 13, 2).replace(IC.cal, '<path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/>')}Photo</button><div class="bt">${title}</div><div class="bs">${sub}</div></div>`;
+function shrink(file, maxW = 1000, q = 0.72) {
+  return new Promise((res, rej) => { const fr = new FileReader(); fr.onerror = rej; fr.onload = () => { const im = new Image(); im.onerror = rej; im.onload = () => {
+    const sc = Math.min(1, maxW / im.width), c = document.createElement("canvas"); c.width = Math.round(im.width * sc); c.height = Math.round(im.height * sc);
+    c.getContext("2d").drawImage(im, 0, 0, c.width, c.height); res(c.toDataURL("image/jpeg", q)); }; im.src = fr.result; }; fr.readAsDataURL(file); });
+}
+let photoKey = null;
+function photoSheet(k, label) {
+  const custom = !!(D["hq-img-" + k] && D["hq-img-" + k].d);
+  openSheet(`<h3>${label || "Photo"}</h3><div class="banner" style="${bg(k)};height:150px;margin-top:0"><div class="bs">${custom ? "Your photo" : PHOTO[k] ? "Default photo" : "No picture yet"}</div></div>
+    <button class="btn" id="pick">Choose a photo</button>${custom ? `<button class="btn ghost" id="reset">${PHOTO[k] ? "Use the default photo" : "Remove picture"}</button>` : ""}`, sh => {
+    sh.querySelector("#pick").onclick = () => { photoKey = k; $("#imgfile").click(); };
+    if (custom) sh.querySelector("#reset").onclick = () => { D["hq-img-" + k] = { d: null }; save("hq-img-" + k); closeSheet(); render(); toast("Done"); };
+  });
+}
+// ================= Book covers (Open Library, free) =================
+let coverBusy = false;
+async function fetchCovers() {
+  if (coverBusy) return; const g = doc("hq-growth"); const todo = g.books.filter(b => b.cover === undefined).slice(0, 12); if (!todo.length) return;
+  coverBusy = true; let changed = false;
+  for (const b of todo) {
+    try { const r = await fetch("https://openlibrary.org/search.json?q=" + encodeURIComponent(b.t) + "&limit=1&fields=cover_i,author_name"); const j = await r.json(); const d = (j.docs || [])[0] || {};
+      b.cover = d.cover_i || 0; if (d.author_name && !b.author) b.author = d.author_name[0]; changed = true; } catch (e) { break; }
+  }
+  coverBusy = false; if (changed) { save("hq-growth"); if (ui.page === "growth" && ui.gtab === "books" && !sheetOpen()) render(); fetchCovers(); }
+}
+const SPINE = ["#1f3b5c", "#7a2e2e", "#2f5d50", "#5b4a8a", "#8a5a1f", "#2b2b2b", "#0a54c4", "#9c2f5c"];
+function coverHtml(b) {
+  if (b.cover) return `<span class="cv" style="background-image:url(https://covers.openlibrary.org/b/id/${b.cover}-M.jpg)"></span>`;
+  const c = SPINE[[...b.t].reduce((a, ch) => a + ch.charCodeAt(0), 0) % SPINE.length];
+  return `<span class="cv" style="background:linear-gradient(160deg,${c},#0008),${c}"><span class="cvf"><span>${esc(b.t)}</span><small>${esc(b.author || "")}</small></span></span>`;
+}
+// ================= Wallet colours =================
+function brand(x) {
+  const n = (x.name || "").toLowerCase();
+  const B = [["iberia", "linear-gradient(135deg,#e3262f,#a8101e)", "#fff", "#f7c948"], ["skymiles", "linear-gradient(135deg,#0b2a5b,#06183a)", "#fff", "#ff5a6a"], ["delta", "linear-gradient(135deg,#0b2a5b,#06183a)", "#fff", "#ff5a6a"],
+    ["lufthansa", "linear-gradient(135deg,#0d1e3f,#16305e)", "#fff", "#f9b000"], ["miles & more", "linear-gradient(135deg,#0d1e3f,#16305e)", "#fff", "#f9b000"], ["marriott", "linear-gradient(135deg,#8c1d2b,#5a0f1a)", "#fff", "#e9c46a"],
+    ["hilton", "linear-gradient(135deg,#1153a0,#0a3570)", "#fff", "#a9cbff"], ["meli", "linear-gradient(135deg,#2a2a2a,#0e0e0e)", "#fff", "#c8a96a"], ["radisson", "linear-gradient(135deg,#1e3a5f,#0d2240)", "#fff", "#d4af37"],
+    ["avis", "linear-gradient(135deg,#d4002a,#9e001f)", "#fff", "#fff"], ["hertz", "linear-gradient(135deg,#ffd200,#f0b800)", "#111", "#111"],
+    ["amex", "linear-gradient(125deg,#e9ecef,#bfc5cc 40%,#f4f5f6 60%,#aab1ba)", "#1d2230", "#0a54c4"], ["membership rewards", "linear-gradient(125deg,#e9ecef,#bfc5cc 40%,#f4f5f6 60%,#aab1ba)", "#1d2230", "#0a54c4"]];
+  const f = B.find(b => n.includes(b[0])); if (f) return { bg: f[1], fg: f[2], ac: f[3] };
+  return { air: { bg: "linear-gradient(135deg,#0a3d91,#072a66)", fg: "#fff", ac: "#9cc3ff" }, hotel: { bg: "linear-gradient(135deg,#3b3f46,#1f2227)", fg: "#fff", ac: "#e0c070" }, car: { bg: "linear-gradient(135deg,#1f8a5b,#11603d)", fg: "#fff", ac: "#c9f2dc" } }[x.type] || { bg: "linear-gradient(135deg,#5b4a8a,#3a2d63)", fg: "#fff", ac: "#e0d4ff" };
+}
+const cardStyle = x => { const b = brand(x), pic = D["hq-img-m-" + x.id] && D["hq-img-m-" + x.id].d ? D["hq-img-m-" + x.id] : null; return { cls: pic ? "pic" : "", st: pic ? `background-image:url('${pic.d}');color:#fff` : `background:${b.bg};color:${b.fg}`, ac: pic ? "#fff" : b.ac }; };
+
 const VIEWS = {};
 VIEWS.home = function () {
   const h = NOW.getHours(), greet = h < 12 ? "Good morning" : h < 20 ? "Good afternoon" : "Good evening";
@@ -404,7 +482,7 @@ VIEWS.home = function () {
   const nOpen = openTasks().length, gl = doc("hq-growth").goals.filter(g => !g.done).length;
   const upB = ppl.filter(p => daysTo(nextBday(p)) <= 7).length;
   const tiles = [["tasks", "Tasks", nOpen + " open", "tab:tasks"], ["money", "Money", m.incoming.length ? money(T.incoming, "EUR", { whole: true }) + " on its way" : "Spending & accounts", "tab:money"], ["growth", "Growth", gl + " goals", "growth"],
-    ["people", "People", upB ? upB + " this week" : ppl.length + " birthdays", "people"], ["wish", "Wishlist", doc("hq-wish").items.filter(w => !w.got).length + " items", "wish"], ["member", "Memberships", doc("hq-members").items.length + " cards", "members"]];
+    ["people", "People", upB ? upB + " this week" : ppl.length + " birthdays", "people"], ["wish", "Wishlist", doc("hq-wish").items.filter(w => !w.got).length + " items", "wish"], ["members", "Memberships", doc("hq-members").items.length + " cards", "members"]];
   return `<div class="top"><div><div class="hi">${greet}</div><div class="nm">Rubén</div></div><button class="av" data-act="go" data-p="settings">R</button></div>
   <button class="plat" style="width:100%;text-align:left;display:block" data-act="tab" data-v="money"><div class="pl1"><span>RUBY'S HQ</span><span class="chipc"></span></div>
     <div class="lbl">Net worth</div><div class="nw">${bigMoney(T.nw)}</div>
@@ -415,7 +493,7 @@ VIEWS.home = function () {
   <div class="sec"><h2>This week</h2><a data-act="tab" data-v="tasks">See all</a></div>
   <div class="card">${week}</div>
   <div class="sec"><h2>Your life</h2></div>
-  <div class="grid">${tiles.map(([i, n, s, to]) => `<button class="tile" data-act="${to.startsWith("tab:") ? "tab" : "go"}" data-v="${to.slice(4)}" data-p="${to}"><span class="ti">${ic(i, 26)}</span><span><b>${n}</b><small>${esc(s)}</small></span></button>`).join("")}</div>`;
+  <div class="grid">${tiles.map(([k, n, s, to]) => `<button class="ptile" style="${bg(k)}" data-act="${to.startsWith("tab:") ? "tab" : "go"}" data-v="${to.slice(4)}" data-p="${to}"><b>${n}</b><small>${esc(s)}</small></button>`).join("")}</div>`;
 };
 
 VIEWS.tasks = function () {
@@ -429,7 +507,7 @@ VIEWS.tasks = function () {
   if (dn.length) out += `<div class="sec"><h2>Done</h2><a data-act="cleardone">Clear done</a></div><div class="card">${dn.map(t => taskRow(t)).join("")}</div>`;
   if (!out) out = `<div class="card" style="margin-top:16px"><div class="empty">No tasks here. Tap + to add one.</div></div>`;
   const cnt = k => doc("hq-tasks").items.filter(t => !t.done && (k === "all" || t.p === k)).length;
-  return `<div class="ptitle">Tasks</div>
+  return `${banner("tasks", "Tasks", cnt("all") + " open")}
   <div class="chips"><button class="chip ${ui.tf === "all" ? "on" : ""}" data-act="tf" data-v="all">All · ${cnt("all")}</button>${Object.entries(PROJ).map(([k, [n, c]]) => `<button class="chip ${ui.tf === k ? "on" : ""}" data-act="tf" data-v="${k}"><span class="dot" style="background:${c}"></span>${n} · ${cnt(k)}</button>`).join("")}</div>
   ${out}`;
 };
@@ -478,7 +556,7 @@ VIEWS.money = function () {
     <button class="btn ghost sm" style="margin-top:12px" data-act="fix">+ Add fixed cost</button>
     <div class="sec"><h2>Investments</h2></div><div class="card"><div class="empty">Coming soon: your investments, with prices updated every day.</div></div>`;
   }
-  return `<div class="ptitle">Money</div>
+  return `${banner("money", "Money", "Net worth " + money(T.nw, "EUR", { whole: true }))}
   <div class="plat sm"><div class="pl1"><span>NET WORTH</span><span class="chipc"></span></div><div class="nw" style="margin-top:12px">${bigMoney(T.nw)}</div>
   <div class="pl2"><span>Accounts ${money(T.assets, "EUR", { whole: true })}</span><span>Debts ${money(T.debts, "EUR", { whole: true })}</span></div></div>
   <div class="seg" style="margin-top:16px">${[["overview", "Spending"], ["accounts", "Accounts"], ["incoming", "Incoming"], ["fixed", "Fixed"]].map(([k, n]) => `<button class="${tab === k ? "on" : ""}" data-act="mtab" data-v="${k}">${n}</button>`).join("")}</div>
@@ -509,11 +587,16 @@ PAGES.growth = function () {
   } else {
     const key = ui.gtab, list = g[key].slice().sort((a, b) => ({ 1: 0, 0: 1, 2: 2 }[a.s] - { 1: 0, 0: 1, 2: 2 }[b.s]));
     const lab = ["To start", "In progress", "Done"];
-    body = `<div class="card" style="margin-top:14px">${list.map(x => `<div class="row"><span class="ib">${ic(key === "books" ? "book" : "growth", 18)}</span><div class="tx" data-act="bedit" data-k="${key}" data-id="${x.id}"><div class="t1">${esc(x.t)}</div>${x.doneAt ? `<div class="t2">Finished ${nice(x.doneAt)}</div>` : ""}</div><button class="state s${x.s}" data-act="bstate" data-k="${key}" data-id="${x.id}">${lab[x.s]}</button></div>`).join("") || `<div class="empty">Nothing here yet</div>`}</div>
+    if (key === "books") body = `<div class="books">${list.map(x => `<div class="bk"><button style="display:block;width:100%" data-act="bedit" data-k="books" data-id="${x.id}">${coverHtml(x)}</button><b>${esc(x.t)}</b><button class="state s${x.s}" data-act="bstate" data-k="books" data-id="${x.id}">${lab[x.s]}</button></div>`).join("") || `<div class="empty">Nothing here yet</div>`}</div>
+    <button class="btn ghost sm" style="margin-top:16px" data-act="badd" data-k="books">+ Add book</button>
+    <div class="note">Covers are found automatically from the title. Tap the label to move a book along: To start, In progress, Done.</div>`;
+    else body = `<div class="card" style="margin-top:14px">${list.map(x => `<div class="row"><span class="ib">${ic(key === "books" ? "book" : "growth", 18)}</span><div class="tx" data-act="bedit" data-k="${key}" data-id="${x.id}"><div class="t1">${esc(x.t)}</div>${x.doneAt ? `<div class="t2">Finished ${nice(x.doneAt)}</div>` : ""}</div><button class="state s${x.s}" data-act="bstate" data-k="${key}" data-id="${x.id}">${lab[x.s]}</button></div>`).join("") || `<div class="empty">Nothing here yet</div>`}</div>
     <button class="btn ghost sm" style="margin-top:12px" data-act="badd" data-k="${key}">+ Add ${key === "books" ? "book" : "course"}</button>
     <div class="note">Tap the label to move it along: To start, In progress, Done.</div>`;
   }
-  return `${backBtn()}<div class="ptitle">Growth</div>
+  const yr = String(NOW.getFullYear()), booksY = g.books.filter(b => b.s === 2 && b.doneAt && b.doneAt.slice(0, 4) === yr).length;
+  if (ui.gtab === "books") setTimeout(fetchCovers, 50);
+  return `${backBtn()}${banner("growth", "Growth", g.goals.filter(x => !x.done).length + " goals · " + booksY + " book" + (booksY === 1 ? "" : "s") + " this year")}
   <div class="seg">${[["goals", "Goals"], ["books", "Books"], ["courses", "Courses"]].map(([k, n]) => `<button class="${ui.gtab === k ? "on" : ""}" data-act="gtab" data-v="${k}">${n}</button>`).join("")}</div>
   ${body}
   <button class="card row" style="width:100%;margin-top:18px;text-align:left" data-act="go" data-p="review"><span class="ib dark">${ic("trophy", 19)}</span><div class="tx"><div class="t1">Year in Review</div><div class="t2">Everything you've crossed off in ${NOW.getFullYear()}</div></div><span style="color:var(--mute)">${ic("chev", 18)}</span></button>`;
@@ -521,7 +604,7 @@ PAGES.growth = function () {
 
 PAGES.people = function () {
   const list = doc("hq-people").items.slice().sort((a, b) => nextBday(a) - nextBday(b));
-  return `${backBtn()}<div class="ptitle">People</div>
+  return `${backBtn()}${banner("people", "People", list.length + " birthday" + (list.length === 1 ? "" : "s"))}
   <div class="card">${list.map(p => { const d = nextBday(p), n = daysTo(d), age = turns(p, d);
     return `<div class="row" data-act="pedit" data-id="${p.id}"><span class="ib ${n === 0 ? "dark" : ""}">${ic("cake", 18)}</span><div class="tx"><div class="t1">${esc(p.name)}</div><div class="t2">${p.d} ${MONTHS[p.m - 1]}${age ? " · turns " + age : ""}</div></div><span class="t2" style="font-weight:700;${n === 0 ? "color:var(--blue)" : ""}">${n === 0 ? "Today" : n === 1 ? "Tomorrow" : "in " + n + " days"}</span></div>`; }).join("") || `<div class="empty">No birthdays yet. Add them here, or send me your list and I'll load it in.</div>`}</div>
   <button class="btn" style="margin-top:14px" data-act="padd">+ Add birthday</button>`;
@@ -530,17 +613,27 @@ PAGES.people = function () {
 PAGES.wish = function () {
   const it = doc("hq-wish").items, open = it.filter(w => !w.got), got = it.filter(w => w.got);
   const row = w => `<div class="row ${w.got ? "done" : ""}"><button class="cb" data-act="wgot" data-id="${w.id}">${w.got ? ic("check", 15, 3) : ""}</button><div class="tx" data-act="wedit" data-id="${w.id}"><div class="t1">${esc(w.t)}</div>${w.got && w.gotAt ? `<div class="t2">Got it ${nice(w.gotAt)}</div>` : ""}</div>${w.price ? `<div class="amt">${money(w.price, "EUR", { whole: w.price >= 100 })}</div>` : ""}</div>`;
-  return `${backBtn()}<div class="ptitle">Wishlist</div>
+  return `${backBtn()}${banner("wish", "Wishlist", open.length + " things you want")}
   <button class="btn" data-act="wadd">+ Add to wishlist</button>
   <div class="sec"><h2>Wanted</h2><a>${open.length}</a></div><div class="card">${open.map(row).join("") || `<div class="empty">Empty</div>`}</div>
   ${got.length ? `<div class="sec"><h2>Got</h2><a>${got.length}</a></div><div class="card">${got.map(row).join("")}</div>` : ""}`;
 };
 
 PAGES.members = function () {
-  const it = doc("hq-members").items;
-  return `${backBtn()}<div class="ptitle">Memberships</div>` + Object.entries(MTYPES).map(([k, n]) => { const l = it.filter(x => x.type === k); return l.length ? `<div class="sec"><h2>${n}</h2></div><div class="card">${l.map(x => { const warn = x.exp && daysTo(parse(x.exp)) <= 30;
-    return `<div class="row"><span class="ib ${k === "air" ? "dark" : ""}">${ic(k === "air" ? "plane" : k === "car" ? "member" : k === "hotel" ? "home" : "star", 18)}</span><div class="tx" data-act="medit" data-id="${x.id}"><div class="t1">${esc(x.name)}${x.status ? ` <span class="t2" style="font-weight:700;color:#a07c1c">${esc(x.status)}</span>` : ""}</div><div class="t2">${x.num ? esc(x.num) : "No number"}${x.pts != null ? " · " + Number(x.pts).toLocaleString("en-GB") + " pts" : ""}${x.exp ? ` · <span class="${warn ? "red" : ""}">expires ${nice(x.exp)}</span>` : ""}</div></div>${x.num ? `<button class="copy" data-act="copy" data-v="${esc(x.num)}">Copy</button>` : ""}</div>`; }).join("")}</div>` : ""; }).join("") +
-  `<button class="btn" style="margin-top:16px" data-act="madd">+ Add membership</button><div class="note">Set an expiry date and you'll get a reminder on the home screen a month before.</div>`;
+  const order = { air: 0, hotel: 1, car: 2, other: 3 };
+  const it = doc("hq-members").items.slice().sort((a, b) => (order[a.type] ?? 9) - (order[b.type] ?? 9));
+  const open = it.find(x => x.id === ui.openM), rest = it.filter(x => x !== open);
+  let top = "";
+  if (open) { const c = cardStyle(open), warn = open.exp && daysTo(parse(open.exp)) <= 30;
+    top = `<div class="wopen ${c.cls}" style="${c.st}"><div class="wh" data-act="mopen" data-id="${open.id}"><b>${esc(open.name)}</b><span style="color:${c.ac}">${esc(open.status || MTYPES[open.type] || "")}</span></div>
+      <div class="wnum">${open.num ? esc(open.num) : "No number yet"}</div>
+      <div class="wp">${open.pts != null ? Number(open.pts).toLocaleString("en-GB") + " points" : ""}${open.exp ? ` · <span style="${warn ? "color:#ffb4a8" : ""}">expire ${nice(open.exp)}</span>` : ""}</div>
+      <div class="wact">${open.num ? `<button data-act="copy" data-v="${esc(open.num)}">Copy number</button>` : ""}<button data-act="medit" data-id="${open.id}">Edit</button><button data-act="photo" data-k="m-${open.id}" data-l="Card picture">Card picture</button></div></div>`; }
+  const step = 62, h = rest.length ? (rest.length - 1) * step + 200 : 0;
+  const stack = `<div class="wallet" style="height:${h}px">${rest.map((x, i) => { const c = cardStyle(x);
+    return `<button class="wc ${c.cls}" style="${c.st};top:${i * step}px" data-act="mopen" data-id="${x.id}"><div class="wh"><b>${esc(x.name)}</b><span style="color:${c.ac}">${esc(x.status || "")}</span></div><div class="wp">${x.pts != null ? Number(x.pts).toLocaleString("en-GB") + " pts" : ""}</div></button>`; }).join("")}</div>`;
+  return `${backBtn()}<div class="ptitle" style="margin-bottom:2px">Memberships</div><div class="hi" style="margin:0 2px 14px">${open ? "Tap the card again to close it" : "Tap a card to see the number"}</div>${top}${stack}
+  <button class="btn" style="margin-top:18px" data-act="madd">+ Add membership</button><div class="note">Add a picture of your real card from "Card picture". Set an expiry date to get a reminder a month before.</div>`;
 };
 
 PAGES.review = function () {
@@ -739,18 +832,20 @@ const ACT = {
   gdel: el => confirmSheet("Delete goal?", "This removes the goal and its steps.", "Delete", () => { const gs = doc("hq-growth"); gs.goals = gs.goals.filter(x => x.id !== el.dataset.id); save("hq-growth"); render(); }),
   bstate: el => { const x = findIn("hq-growth", el.dataset.k, el.dataset.id); x.s = (x.s + 1) % 3; x.doneAt = x.s === 2 ? TODAY : null; save("hq-growth"); render(); if (x.s === 2) toast("Nice one. Added to Year in Review"); },
   badd: el => { const k = el.dataset.k; simpleSheet(k === "books" ? "New book" : "New course", [{ k: "t", label: "Title", req: 1 }], { t: "" }, v => { doc("hq-growth")[k].push({ id: uid(), t: v.t, s: 0 }); save("hq-growth"); }); },
-  bedit: el => { const k = el.dataset.k, l = doc("hq-growth")[k], x = l.find(z => z.id === el.dataset.id); simpleSheet("Edit", [{ k: "t", label: "Title", req: 1 }], x, v => { x.t = v.t; save("hq-growth"); }, () => { l.splice(l.indexOf(x), 1); save("hq-growth"); }); },
+  bedit: el => { const k = el.dataset.k, l = doc("hq-growth")[k], x = l.find(z => z.id === el.dataset.id); simpleSheet("Edit", [{ k: "t", label: "Title", req: 1 }], x, v => { if (x.t !== v.t) { delete x.cover; delete x.author; } x.t = v.t; save("hq-growth"); }, () => { l.splice(l.indexOf(x), 1); save("hq-growth"); }); },
   padd: () => personSheet(), pedit: el => personSheet(el.dataset.id),
   wadd: () => simpleSheet("Add to wishlist", [{ k: "t", label: "What", req: 1 }, { k: "price", label: "Price (optional)", num: 1 }], { t: "", price: "" }, v => { doc("hq-wish").items.push({ id: uid(), t: v.t, price: v.price, got: false }); save("hq-wish"); }),
   wedit: el => { const l = doc("hq-wish").items, w = l.find(x => x.id === el.dataset.id); simpleSheet("Edit", [{ k: "t", label: "What", req: 1 }, { k: "price", label: "Price (optional)", num: 1 }], w, v => { Object.assign(w, v); save("hq-wish"); }, () => { l.splice(l.indexOf(w), 1); save("hq-wish"); }); },
   wgot: el => { const w = findIn("hq-wish", "items", el.dataset.id); w.got = !w.got; w.gotAt = w.got ? TODAY : null; save("hq-wish"); render(); if (w.got) toast("Enjoy it"); },
   madd: () => ACT.medit({ dataset: {} }),
+  mopen: el => { ui.openM = ui.openM === el.dataset.id ? null : el.dataset.id; render(); window.scrollTo({ top: 0, behavior: "smooth" }); },
+  photo: el => photoSheet(el.dataset.k, el.dataset.l),
   medit: el => { const l = doc("hq-members").items, id = el.dataset.id, x = id ? l.find(z => z.id === id) : { type: "air", name: "", num: "", status: "", pts: "", exp: "" };
     simpleSheet(id ? x.name : "New membership", [{ k: "name", label: "Programme", req: 1 }, { k: "type", label: "Type", type: "select", opts: Object.entries(MTYPES) }, { k: "num", label: "Member number" }, { k: "status", label: "Status level", ph: "e.g. Gold" }, { k: "pts", label: "Points", num: 1 }, { k: "exp", label: "Points expire", type: "date" }], x,
       v => { v.exp = v.exp || null; if (id) Object.assign(x, v); else l.push(Object.assign({ id: uid() }, v)); save("hq-members"); }, id ? () => { l.splice(l.indexOf(x), 1); save("hq-members"); } : null); },
   copy: el => { const v = el.dataset.v; (navigator.clipboard ? navigator.clipboard.writeText(v) : Promise.reject()).then(() => toast("Copied " + v), () => toast(v)); },
   import: () => $("#file").click(),
-  export: () => { const blob = new Blob([JSON.stringify({ _rubyshq: 1, docs: Object.fromEntries(Object.keys(BLANK).map(k => [k, doc(k)])) }, null, 1)], { type: "application/json" });
+  export: () => { const blob = new Blob([JSON.stringify({ _rubyshq: 1, docs: Object.assign(Object.fromEntries(Object.keys(BLANK).map(k => [k, doc(k)])), Object.fromEntries(Object.keys(D).filter(k => k.startsWith("hq-img-")).map(k => [k, D[k]]))) }, null, 1)], { type: "application/json" });
     const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "rubys-hq-backup-" + TODAY + ".json"; a.click(); },
   logout: () => confirmSheet("Sign out?", "Your data stays safe in your account.", "Sign out", async () => { await sb.auth.signOut(); }),
 };
@@ -763,11 +858,16 @@ document.addEventListener("submit", e => {
   const t = f.t.value.trim(); if (!t) return; const g = findIn("hq-growth", "goals", f.dataset.g); g.steps.push({ id: uid(), t, done: false }); save("hq-growth"); render();
   const nf = document.querySelector(`form[data-g="${g.id}"] input`); if (nf) nf.focus();
 });
+$("#imgfile").addEventListener("change", async e => {
+  const file = e.target.files[0]; e.target.value = ""; if (!file || !photoKey) return;
+  try { const d = await shrink(file, photoKey.startsWith("m-") ? 800 : 1000, 0.72); const name = "hq-img-" + photoKey; D[name] = { d }; save(name); closeSheet(); render(); toast("Photo saved"); }
+  catch (err) { toast("That photo couldn't be read"); }
+});
 $("#file").addEventListener("change", async e => {
   const file = e.target.files[0]; e.target.value = ""; if (!file) return;
   let j; try { j = JSON.parse(await file.text()); } catch (err) { toast("That file couldn't be read"); return; }
   if (!j || !j.docs) { toast("That isn't a Ruby's HQ file"); return; }
-  const names = Object.keys(j.docs).filter(k => BLANK[k]);
+  const names = Object.keys(j.docs).filter(k => BLANK[k] || k.startsWith("hq-img-"));
   confirmSheet("Import this file?", `It will load: ${names.map(n => n.replace("hq-", "")).join(", ")}. Anything already in those sections is replaced.`, "Import", () => {
     names.forEach(n => { D[n] = j.docs[n]; save(n); }); render(); toast("Imported");
   });
