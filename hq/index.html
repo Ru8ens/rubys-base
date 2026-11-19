@@ -20,7 +20,7 @@
 :root{
   --bg:#f4f4f2; --surf:#fff; --ink:#16181d; --sub:#6b6f78; --mute:#9a9ea6; --line:#ececea; --cb:#c9cac6;
   --blue:#0a54c4; --navy:#0a3d91; --blue-soft:#eef3fb; --gold:#e0c070; --red:#d4402b; --green:#1f8a5b;
-  --arowana:#2563eb; --tfw:#0f9d8a; --grow:#d97706; --personal:#9333ea; --other:#6b7280;
+  --arowana:#2563eb; --tfw:#0f9d8a; --grow:#d97706; --personal:#9333ea; --charlotte:#db2777; --other:#6b7280;
   --safe-b:env(safe-area-inset-bottom,0px); --safe-t:env(safe-area-inset-top,0px);
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -252,7 +252,7 @@ const icStar = (s = 18) => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" 
 document.querySelectorAll("[data-ic]").forEach(el => el.outerHTML = ic(el.dataset.ic, el.dataset.ic === "plus" ? 26 : 23, el.dataset.ic === "plus" ? 2.4 : 1.9));
 
 // ================= Constants =================
-const PROJ = { arowana: ["Arowana", "var(--arowana)"], tfw: ["TFW", "var(--tfw)"], grow: ["GROW", "var(--grow)"], personal: ["Personal", "var(--personal)"], other: ["Other", "var(--other)"] };
+const PROJ = { arowana: ["Arowana", "var(--arowana)"], tfw: ["TFW", "var(--tfw)"], grow: ["GROW", "var(--grow)"], charlotte: ["Charlotte", "var(--charlotte)"], personal: ["Personal", "var(--personal)"], other: ["Other", "var(--other)"] };
 const CATS = { groceries: ["Groceries", "cart"], health: ["Health", "heart"], eat: ["Eating & going out", "fork"], transport: ["Transport & travel", "plane"], shopping: ["Shopping", "bag"], other: ["Other", "dots"] };
 const MTYPES = { air: "Airlines", hotel: "Hotels", car: "Car rental", other: "Other" };
 const CURS = ["EUR", "USD", "GBP", "CHF"];
@@ -337,7 +337,7 @@ async function pull() {
     D[r.name] = r.data;
   });
   pulledOnce = true; cacheSave(); syncState = "Synced"; if (dirty.size) flush();
-  dailyBackup();
+  dailyBackup(); moveCharlotte();
   if (!document.activeElement || !document.activeElement.matches("input, textarea, select")) render();
 }
 // One automatic backup per day, kept for 7 days (one per weekday), saved privately in your account.
@@ -348,6 +348,16 @@ async function dailyBackup() {
     const { error } = await sb.from("docs").upsert([{ user_id: USER.id, name: "bk-" + DOW[NOW.getDay()].slice(0, 3).toLowerCase(), data: { date: TODAY, docs }, updated_at: new Date().toISOString() }], { onConflict: "user_id,name" });
     if (!error) localStorage.setItem("rubyshq-bk-" + USER.id, TODAY);
   } catch (e) {}
+}
+async function moveCharlotte() {
+  const key = "rubyshq-mig-charlotte-" + USER.id; if (localStorage.getItem(key)) return;
+  const items = doc("hq-tasks").items, todo = items.filter(t => t.p !== "charlotte" && (t.who === "charlotte" || /charlotte/i.test(t.t)));
+  if (!todo.length) { localStorage.setItem(key, "1"); return; }
+  // Save a full copy first. If that copy can't be saved, nothing is moved.
+  const docs = Object.fromEntries(Object.keys(BLANK).map(k => [k, D[k]]).filter(([, v]) => v));
+  const { error } = await sb.from("docs").upsert([{ user_id: USER.id, name: "bk-before-charlotte", data: { date: TODAY, docs }, updated_at: new Date().toISOString() }], { onConflict: "user_id,name" });
+  if (error) return;
+  todo.forEach(t => { t.p = "charlotte"; }); save("hq-tasks"); localStorage.setItem(key, "1"); render();
 }
 async function restoreSheet() {
   const { data, error } = await sb.from("docs").select("name,data").like("name", "bk-%");
@@ -540,7 +550,7 @@ VIEWS.home = function () {
   const nOpen = openTasks().length, gl = doc("hq-growth").goals.filter(g => !g.done).length;
   const upB = ppl.filter(p => daysTo(nextBday(p)) <= 7).length;
   const tiles = [["tasks", "Tasks", nOpen + " open", "tab:tasks"], ["money", "Money", m.incoming.length ? money(T.incoming, "EUR", { whole: true }) + " on its way" : "Spending & accounts", "tab:money"], ["growth", "Growth", gl + " goals", "growth"],
-    ["people", "People", upB ? upB + " this week" : ppl.length + " birthdays", "people"], ["wish", "Wishlist", doc("hq-wish").items.filter(w => !w.got).length + " items", "wish"], ["members", "Memberships", doc("hq-members").items.length + " cards", "members"], ["charlotte", "Charlotte", charlotteSub(), "charlotte"]];
+    ["people", "People", upB ? upB + " this week" : ppl.length + " birthdays", "people"], ["wish", "Wishlist", doc("hq-wish").items.filter(w => !w.got).length + " items", "wish"], ["members", "Memberships", doc("hq-members").items.length + " cards", "members"]];
   return `<div class="top"><div><div class="hi">${greet}</div><div class="nm">Rubén</div></div><button class="av" data-act="go" data-p="settings">R</button></div>
   <button class="plat" style="width:100%;text-align:left;display:block" data-act="tab" data-v="money"><div class="pl1"><span>RUBY'S HQ</span><span class="chipc"></span></div>
     <div class="lbl">Net worth</div><div class="nw">${bigMoney(T.nw)}</div>
@@ -624,7 +634,7 @@ VIEWS.money = function () {
 function cardMonths() { const out = []; for (let i = 1; i <= 4; i++) out.push(ym(new Date(NOW.getFullYear(), NOW.getMonth() - i, 1))); return out; }
 
 VIEWS.more = function () {
-  const items = [["growth", "Growth", "Goals, books and courses", "growth"], ["people", "People", "Birthdays", "people"], ["wish", "Wishlist", "Things you want", "wish"], ["member", "Memberships", "Airlines, hotels, cars", "members"], ["people", "Charlotte", "Player you represent", "charlotte"], ["trophy", "Year in Review", NOW.getFullYear() + " so far", "review"], ["gear", "Settings", "Import, backup, sign out", "settings"]];
+  const items = [["growth", "Growth", "Goals, books and courses", "growth"], ["people", "People", "Birthdays", "people"], ["wish", "Wishlist", "Things you want", "wish"], ["member", "Memberships", "Airlines, hotels, cars", "members"], ["trophy", "Year in Review", NOW.getFullYear() + " so far", "review"], ["gear", "Settings", "Import, backup, sign out", "settings"]];
   return `<div class="ptitle">More</div><div class="card">${items.map(([i, n, s, p]) => `<div class="row" data-act="go" data-p="${p}"><span class="ib">${ic(i, 19)}</span><div class="tx"><div class="t1">${n}</div><div class="t2">${s}</div></div><span style="color:var(--mute)">${ic("chev", 18)}</span></div>`).join("")}</div>`;
 };
 
