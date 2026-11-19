@@ -449,18 +449,18 @@ function taskRow(t, opts = {}) {
 const PHOTO = { tasks: "1522202176988-66273c2fd55f", money: "1477959858617-67f85cf4f1df",
   "p-arowana": "https://static.wixstatic.com/media/29f6ba_a5e98b8d3c28408986b37d396f9865b7~mv2.jpg/v1/fill/w_1000,h_660,al_c,q_80/stadium.jpg",
   "p-tfw": "https://cdn.thefootballweek.com/wp-content/uploads/2026/11/Estadio-Maracana-Brazil-696x392.jpg",
-  "p-grow": "1579952363873-27f3bade9f55", "p-personal": "1543783207-ec64e4d95325", growth: "1481627834876-b7833e8f5570", people: "1529156069898-49953e39b3ac", wish: "1523170335258-f5ed11844a49", members: "1436491865332-7a61a109cc05" };
+  "p-grow": "1579952363873-27f3bade9f55", "p-charlotte": "brand/charlotte.jpg", "p-personal": "1543783207-ec64e4d95325", growth: "1481627834876-b7833e8f5570", people: "1529156069898-49953e39b3ac", wish: "1523170335258-f5ed11844a49", members: "1436491865332-7a61a109cc05" };
 // Brand banners, matching the documents made for each company
 const BRAND = {
   arowana: { logo: "https://static.wixstatic.com/media/29f6ba_66cf84d66fb44e778d16a66f2985a9d8~mv2.avif/v1/fill/w_446,h_344,al_c,q_80,usm_0.66_1.00_0.01,enc_avif,quality_auto/Arowana%20Logo-01_png.avif", bg: "#050706", rule: "linear-gradient(90deg,#00FCBA,#B9E53A)", lh: 96 },
-  tfw: { logo: "https://thefootballweek.com/wp-content/uploads/2024/10/the-football-week-logo.png", bg: "#0d0d0d", rule: "linear-gradient(90deg,#ffffff,#8a8a8a)", lh: 44 },
+  tfw: { logo: "brand/tfw-white.png", bg: "#0b0b0b", rule: "linear-gradient(90deg,#ffffff,#6b6b6b)", lh: 62 },
 };
 function brandBanner(k, sub) { const b = BRAND[k], ph = imgOf("p-" + k);
   return `<div class="banner bb" style="background:linear-gradient(90deg,${b.bg} 38%,${b.bg}d9 58%,${b.bg}33),${ph ? `url('${ph}') right center/cover no-repeat,` : ""}${b.bg}">
     <button class="chgph" data-act="photo" data-k="p-${k}">${ic("cal", 13, 2).replace(IC.cal, '<path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/>')}Photo</button>
-    <img src="${b.logo}" alt="" style="height:${b.lh}px;width:auto;${k === "tfw" ? "filter:contrast(5);mix-blend-mode:screen;" : ""}align-self:flex-start;margin-bottom:auto;margin-top:${k === "arowana" ? -6 : 18}px"><div class="bs">${sub}</div><span class="brule" style="background:${b.rule}"></span></div>`; }
+    <img src="${b.logo}" alt="" style="height:${b.lh}px;width:auto;align-self:flex-start;margin-bottom:auto;margin-top:${k === "arowana" ? -6 : 18}px"><div class="bs">${sub}</div><span class="brule" style="background:${b.rule}"></span></div>`; }
 const LOGO = { arowana: "https://static.wixstatic.com/media/8e7a0b_c36f6081c82e4a4e937c5f8551d6ec88%7Emv2.png/v1/fill/w_192%2Ch_192/arowana.png", tfw: "https://thefootballweek.com/wp-content/uploads/2024/10/TFW-icon.png" };
-const imgOf = k => (D["hq-img-" + k] && D["hq-img-" + k].d) || (PHOTO[k] ? (PHOTO[k].startsWith("http") ? PHOTO[k] : `https://images.unsplash.com/photo-${PHOTO[k]}?w=900&q=70&auto=format`) : "");
+const imgOf = k => (D["hq-img-" + k] && D["hq-img-" + k].d) || (PHOTO[k] ? (/^(https?:|brand\/)/.test(PHOTO[k]) ? PHOTO[k] : `https://images.unsplash.com/photo-${PHOTO[k]}?w=900&q=70&auto=format`) : "");
 const bg = k => { const u = imgOf(k); return u ? `background-image:url('${u}')` : ""; };
 const banner = (k, title, sub, col, logo) => `<div class="banner" style="${imgOf(k) ? bg(k) : `background:radial-gradient(120% 120% at 100% 0%,#ffffff30,#0000 55%),linear-gradient(135deg,${col || "#0a3d91"},#0b1424)`}">${logo ? `<span class="blogo" style="background-image:url('${logo}');${logo.includes("TFW") ? "background-size:cover" : ""}"></span>` : ""}<button class="chgph" data-act="photo" data-k="${k}">${ic("cal", 13, 2).replace(IC.cal, '<path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/>')}Photo</button><div class="bt">${title}</div><div class="bs">${sub}</div></div>`;
 function shrink(file, maxW = 1000, q = 0.72) {
