@@ -987,7 +987,14 @@ document.getElementById("main").addEventListener("change", ev => {
   if (t.id === "wp-date") { ui.whoopDate = t.value; render(); return; }
   if (t.id === "sh-from" || t.id === "sh-to") { ui.shopFrom = document.getElementById("sh-from").value; ui.shopTo = document.getElementById("sh-to").value; if (ui.shopTo < ui.shopFrom) ui.shopTo = ui.shopFrom; saveUi(); render(); }
 });
-if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(() => {});
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("sw.js", { updateViaCache: "none" }).then(reg => {
+    document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") reg.update().catch(() => {}); });
+  }).catch(() => {});
+  // When a new version arrives, reload once so you always see the latest app.
+  let reloaded = false; const hadController = !!navigator.serviceWorker.controller;
+  navigator.serviceWorker.addEventListener("controllerchange", () => { if (hadController && !reloaded) { reloaded = true; setTimeout(() => location.reload(), 300); } });
+}
 start();
 </script>
 </body>

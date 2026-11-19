@@ -1002,7 +1002,14 @@ if (location.search.includes("demo")) {
   USER = { id: "demo", email: "demo@preview" };
   fetch(new URLSearchParams(location.search).get("demo") || "demo.json").then(r => r.json()).then(j => { Object.assign(D, j.docs); pulledOnce = true; flush = async () => {}; $("#login").classList.add("hidden"); $("#app").classList.remove("hidden"); $("#tab").classList.remove("hidden"); render(); }).catch(() => {});
 } else start();
-if ("serviceWorker" in navigator && !location.search.includes("demo")) navigator.serviceWorker.register("sw.js");
+if ("serviceWorker" in navigator && !location.search.includes("demo")) {
+  navigator.serviceWorker.register("sw.js", { updateViaCache: "none" }).then(reg => {
+    document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") reg.update().catch(() => {}); });
+  }).catch(() => {});
+  // When a new version arrives, reload once so you always see the latest app.
+  let reloaded = false; const hadController = !!navigator.serviceWorker.controller;
+  navigator.serviceWorker.addEventListener("controllerchange", () => { if (hadController && !reloaded) { reloaded = true; setTimeout(() => location.reload(), 300); } });
+}
 </script>
 </body>
 </html>
