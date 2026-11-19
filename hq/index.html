@@ -162,6 +162,8 @@ svg{display:block}
 .books{display:grid;grid-template-columns:repeat(3,1fr);gap:16px 12px;margin-top:14px}
 .bk{text-align:left}
 .cv{aspect-ratio:2/3;border-radius:8px;background:#ddd center/cover no-repeat;box-shadow:0 6px 14px #0003;display:block;width:100%;overflow:hidden}
+.cvp{background:linear-gradient(90deg,var(--sp) 0 9px,#0000 9px),linear-gradient(160deg,#fbfaf7,#efece4);display:flex!important;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:10px 8px 10px 16px;text-align:center}
+.cvp small{font-size:10.5px;color:#7a7e86;font-weight:600;line-height:1.25}
 .cvf{width:100%;height:100%;display:flex;flex-direction:column;justify-content:space-between;padding:10px 9px;color:#fff;font-size:12.5px;font-weight:700;line-height:1.2;text-align:left;letter-spacing:-.01em}
 .cvf small{font-size:10px;opacity:.75;font-weight:600}
 .bk b{display:block;font-size:12.5px;margin:8px 0 5px;line-height:1.25;max-height:31px;overflow:hidden}
@@ -330,7 +332,28 @@ async function pull() {
     D[r.name] = r.data;
   });
   pulledOnce = true; cacheSave(); syncState = "Synced"; if (dirty.size) flush();
+  dailyBackup();
   if (!document.activeElement || !document.activeElement.matches("input, textarea, select")) render();
+}
+// One automatic backup per day, kept for 7 days (one per weekday), saved privately in your account.
+async function dailyBackup() {
+  try { if (localStorage.getItem("rubyshq-bk-" + USER.id) === TODAY) return;
+    const docs = Object.fromEntries(Object.keys(BLANK).map(k => [k, D[k]]).filter(([, v]) => v && itemCount(v) > 0));
+    if (!Object.keys(docs).length) return;
+    const { error } = await sb.from("docs").upsert([{ user_id: USER.id, name: "bk-" + DOW[NOW.getDay()].slice(0, 3).toLowerCase(), data: { date: TODAY, docs }, updated_at: new Date().toISOString() }], { onConflict: "user_id,name" });
+    if (!error) localStorage.setItem("rubyshq-bk-" + USER.id, TODAY);
+  } catch (e) {}
+}
+async function restoreSheet() {
+  const { data, error } = await sb.from("docs").select("name,data").like("name", "bk-%");
+  if (error) { toast("Couldn't reach your backups. Check your connection."); return; }
+  const list = (data || []).map(r => r.data).filter(b => b && b.date).sort((a, b) => b.date.localeCompare(a.date));
+  openSheet(`<h3>Restore a backup</h3><div class="note" style="margin:0 4px 12px">The app saves a copy of everything once a day and keeps the last 7 days.</div>
+    <div class="card">${list.map((b, i) => `<div class="row" data-bk="${i}"><span class="ib">${ic("cal", 18)}</span><div class="tx"><div class="t1">${nice(b.date)}${b.date !== TODAY && nice(b.date).length < 10 ? " · " + b.date.slice(8) + " " + MONTHS[+b.date.slice(5, 7) - 1].slice(0, 3) : ""}</div><div class="t2">${Object.keys(b.docs).length} sections</div></div></div>`).join("") || `<div class="empty">No backups yet. The first one is saved today.</div>`}</div>`, sh => {
+    sh.querySelectorAll("[data-bk]").forEach(r => r.onclick = () => { const b = list[+r.dataset.bk];
+      confirmSheet("Restore " + nice(b.date) + "?", "Everything goes back to how it was on that day. Today's backup is kept, so you can undo this.", "Restore", () => {
+        Object.entries(b.docs).forEach(([n, v]) => { D[n] = v; save(n); }); render(); toast("Restored"); }); });
+  });
 }
 window.addEventListener("online", () => { flush(); pull(); });
 document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") { NOW = new Date(); TODAY = iso(NOW); pull(); render(); } else flush(); });
@@ -411,7 +434,7 @@ function taskRow(t, opts = {}) {
 const PHOTO = { tasks: "1522202176988-66273c2fd55f", money: "1539037116277-4db20889f2d4", growth: "1481627834876-b7833e8f5570", people: "1529156069898-49953e39b3ac", wish: "1523170335258-f5ed11844a49", members: "1436491865332-7a61a109cc05" };
 const imgOf = k => (D["hq-img-" + k] && D["hq-img-" + k].d) || (PHOTO[k] ? `https://images.unsplash.com/photo-${PHOTO[k]}?w=900&q=70&auto=format` : "");
 const bg = k => { const u = imgOf(k); return u ? `background-image:url('${u}')` : ""; };
-const banner = (k, title, sub) => `<div class="banner" style="${bg(k)}"><button class="chgph" data-act="photo" data-k="${k}">${ic("cal", 13, 2).replace(IC.cal, '<path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/>')}Photo</button><div class="bt">${title}</div><div class="bs">${sub}</div></div>`;
+const banner = (k, title, sub, col) => `<div class="banner" style="${imgOf(k) ? bg(k) : `background:radial-gradient(120% 120% at 100% 0%,#ffffff30,#0000 55%),linear-gradient(135deg,${col || "#0a3d91"},#0b1424)`}"><button class="chgph" data-act="photo" data-k="${k}">${ic("cal", 13, 2).replace(IC.cal, '<path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/>')}Photo</button><div class="bt">${title}</div><div class="bs">${sub}</div></div>`;
 function shrink(file, maxW = 1000, q = 0.72) {
   return new Promise((res, rej) => { const fr = new FileReader(); fr.onerror = rej; fr.onload = () => { const im = new Image(); im.onerror = rej; im.onload = () => {
     const sc = Math.min(1, maxW / im.width), c = document.createElement("canvas"); c.width = Math.round(im.width * sc); c.height = Math.round(im.height * sc);
@@ -428,20 +451,28 @@ function photoSheet(k, label) {
 }
 // ================= Book covers (Open Library, free) =================
 let coverBusy = false;
-async function fetchCovers() {
-  if (coverBusy || !pulledOnce) return; const g = doc("hq-growth"); const todo = g.books.filter(b => b.cover === undefined).slice(0, 12); if (!todo.length) return;
-  coverBusy = true; let changed = false;
-  for (const b of todo) {
-    try { const r = await fetch("https://openlibrary.org/search.json?q=" + encodeURIComponent(b.t) + "&limit=1&fields=cover_i,author_name"); const j = await r.json(); const d = (j.docs || [])[0] || {};
-      b.cover = d.cover_i || 0; if (d.author_name && !b.author) b.author = d.author_name[0]; changed = true; } catch (e) { break; }
-  }
-  coverBusy = false; if (changed) { save("hq-growth"); if (ui.page === "growth" && ui.gtab === "books" && !sheetOpen()) render(); fetchCovers(); }
+async function findCover(t) {
+  const q = encodeURIComponent(t); let reached = false;
+  try { const r = await fetch("https://www.googleapis.com/books/v1/volumes?q=" + q + "&maxResults=3&printType=books"); const j = await r.json(); reached = true;
+    for (const it of (j.items || [])) { const v = it.volumeInfo || {}, l = v.imageLinks || {}; const u = l.thumbnail || l.smallThumbnail;
+      if (u) return { img: u.replace(/^http:/, "https:").replace("&edge=curl", "").replace("zoom=1", "zoom=1"), author: (v.authors || [])[0] || "" }; } } catch (e) {}
+  try { const r = await fetch("https://openlibrary.org/search.json?q=" + q + "&limit=1&fields=cover_i,author_name"); const j = await r.json(); reached = true; const d = (j.docs || [])[0] || {};
+    if (d.cover_i) return { img: `https://covers.openlibrary.org/b/id/${d.cover_i}-M.jpg`, author: (d.author_name || [])[0] || "" }; } catch (e) {}
+  return reached ? null : undefined; // undefined = couldn't connect, try again later
 }
-const SPINE = ["#1f3b5c", "#7a2e2e", "#2f5d50", "#5b4a8a", "#8a5a1f", "#2b2b2b", "#0a54c4", "#9c2f5c"];
+async function fetchCovers() {
+  if (coverBusy || !pulledOnce) return; const g = doc("hq-growth"); const todo = g.books.filter(b => b.cv2 === undefined).slice(0, 8); if (!todo.length) return;
+  coverBusy = true;
+  for (const b of todo) { const f = await findCover(b.t); if (f === undefined) break; b.cv2 = 1; b.img = f ? f.img : ""; if (f && f.author && !b.author) b.author = f.author;
+    if (ui.page === "growth" && ui.gtab === "books" && !sheetOpen()) render(); }
+  coverBusy = false; if (todo.some(b => b.cv2)) { save("hq-growth"); if (todo.every(b => b.cv2)) fetchCovers(); }
+}
+const SPINE = ["#1f3b5c", "#7a2e2e", "#2f5d50", "#5b4a8a", "#8a5a1f", "#3a3a3a", "#0a54c4", "#9c2f5c"];
 function coverHtml(b) {
-  if (b.cover) return `<span class="cv" style="background-image:url(https://covers.openlibrary.org/b/id/${b.cover}-M.jpg)"></span>`;
+  const own = D["hq-img-b-" + b.id] && D["hq-img-b-" + b.id].d;
+  if (own || b.img) return `<span class="cv" style="background-image:url('${own || b.img}')"></span>`;
   const c = SPINE[[...b.t].reduce((a, ch) => a + ch.charCodeAt(0), 0) % SPINE.length];
-  return `<span class="cv" style="background:linear-gradient(160deg,${c},#0008),${c}"><span class="cvf"><span>${esc(b.t)}</span><small>${esc(b.author || "")}</small></span></span>`;
+  return `<span class="cv cvp" style="--sp:${c}"><span class="cvi" style="color:${c}">${ic("book", 26, 1.6)}</span><small>${b.cv2 === undefined ? "Finding cover…" : esc(b.author || "No cover found")}</small></span>`;
 }
 // ================= Wallet colours =================
 function brand(x) {
@@ -477,7 +508,7 @@ VIEWS.home = function () {
     today += `<div class="row"><span class="ib dark">${ic("cake", 19)}</span><div class="tx"><div class="t1">${esc(p.name)}'s birthday</div><div class="t2">${age ? "Turns " + age : "Today"}</div></div>
       <button class="pill ${hi ? "ok" : ""}" data-act="sayhi" data-id="${p.id}">${hi ? "Done ✓" : "Say hi"}</button></div>`; });
   todayE.forEach(e => today += `<div class="row" data-act="eedit" data-id="${e.id}"><span class="ib">${ic("cal", 19)}</span><div class="tx"><div class="t1">${esc(e.title)}</div><div class="t2">${e.time ? esc(e.time) + (e.end ? " – " + esc(e.end) : "") : "All day"}</div></div></div>`);
-  dueT.concat(doneToday).forEach(t => today += taskRow(t, { hideDate: t.due === TODAY }));
+  dueT.forEach(t => today += taskRow(t, { hideDate: t.due === TODAY }));
   if (!today) today = `<div class="empty">Nothing due today. Enjoy it.</div>`;
   // week
   const we = weekEnd();
@@ -513,10 +544,11 @@ VIEWS.tasks = function () {
   const byDue = (a, b) => (b.star - a.star) || (a.due || "").localeCompare(b.due || "");
   let out = groups.map(([n, f]) => { const l = all.filter(f).sort(byDue); return l.length ? `<div class="sec"><h2 class="${n === "Overdue" ? "red" : ""}">${n}</h2><a>${l.length}</a></div><div class="card">${l.map(t => taskRow(t)).join("")}</div>` : ""; }).join("");
   const dn = all.filter(t => t.done).sort((a, b) => (b.doneAt || "").localeCompare(a.doneAt || ""));
-  if (dn.length) out += `<div class="sec"><h2>Done</h2><a data-act="cleardone">Clear done</a></div><div class="card">${dn.map(t => taskRow(t)).join("")}</div>`;
+  if (dn.length) out += ui.showDone ? `<div class="sec"><h2>Completed</h2><a data-act="showdone">Hide</a></div><div class="card">${dn.map(t => taskRow(t)).join("")}</div>` : `<button class="btn ghost sm" style="margin-top:18px" data-act="showdone">Show completed (${dn.length})</button>`;
   if (!out) out = `<div class="card" style="margin-top:16px"><div class="empty">No tasks here. Tap + to add one.</div></div>`;
   const cnt = k => doc("hq-tasks").items.filter(t => !t.done && (k === "all" || t.p === k)).length;
-  return `${banner("tasks", "Tasks", cnt("all") + " open")}
+  const pj = PROJ[ui.tf];
+  return `${pj ? banner("p-" + ui.tf, pj[0], cnt(ui.tf) + " open", getComputedStyle(document.documentElement).getPropertyValue(pj[1].slice(4, -1)).trim()) : banner("tasks", "Tasks", cnt("all") + " open")}
   <div class="chips"><button class="chip ${ui.tf === "all" ? "on" : ""}" data-act="tf" data-v="all">All · ${cnt("all")}</button>${Object.entries(PROJ).map(([k, [n, c]]) => `<button class="chip ${ui.tf === k ? "on" : ""}" data-act="tf" data-v="${k}"><span class="dot" style="background:${c}"></span>${n} · ${cnt(k)}</button>`).join("")}</div>
   ${out}`;
 };
@@ -582,7 +614,8 @@ const PAGES = {};
 PAGES.growth = function () {
   const g = doc("hq-growth"); let body = "";
   if (ui.gtab === "goals") {
-    const list = g.goals.filter(x => (x.kind || "personal") === ui.gkind).sort((a, b) => a.done - b.done);
+    const allG = g.goals.filter(x => (x.kind || "personal") === ui.gkind), doneG = allG.filter(x => x.done);
+    const list = allG.filter(x => !x.done || ui.showDoneG).sort((a, b) => a.done - b.done);
     body = `<div class="seg" style="margin:12px 0 4px">${[["personal", "Personal"], ["pro", "Professional"]].map(([k, n]) => `<button class="${ui.gkind === k ? "on" : ""}" data-act="gkind" data-v="${k}">${n}</button>`).join("")}</div>
     <div class="card" style="margin-top:12px">${list.map(x => { const n = x.steps.length, d = x.steps.filter(s => s.done).length, open = ui.openGoal === x.id;
       return `<div class="goal" style="${list.indexOf(x) ? "border-top:1px solid var(--line)" : ""}"><div class="row ${x.done ? "done" : ""}" style="border:0">
@@ -592,13 +625,14 @@ PAGES.growth = function () {
         ${open ? `<div class="steps">${x.steps.map(s => `<div class="step ${s.done ? "done" : ""}"><button class="cb ${s.done ? "" : ""}" style="${s.done ? "background:var(--blue);border-color:var(--blue);color:#fff" : ""}" data-act="sdone" data-g="${x.id}" data-id="${s.id}">${s.done ? ic("check", 13, 3) : ""}</button><span style="flex:1">${esc(s.t)}</span><button style="color:var(--mute);font-size:18px;padding:0 4px" data-act="sdel" data-g="${x.id}" data-id="${s.id}">×</button></div>`).join("")}
           <form class="addstep" data-act="sadd" data-g="${x.id}"><input placeholder="Add a step" name="t"><button class="pill" type="submit">Add</button></form>
           <div style="display:flex;gap:14px;margin-top:10px"><button class="link" data-act="gedit" data-id="${x.id}">Rename</button><button class="link red" data-act="gdel" data-id="${x.id}">Delete goal</button></div></div>` : ""}</div>`; }).join("") || `<div class="empty">No goals yet</div>`}</div>
-    <button class="btn ghost sm" style="margin-top:12px" data-act="gadd">+ Add goal</button>`;
+    <button class="btn ghost sm" style="margin-top:12px" data-act="gadd">+ Add goal</button>
+    ${doneG.length ? `<button class="link" style="display:block;margin:14px auto 0" data-act="showdoneg">${ui.showDoneG ? "Hide completed" : "Show completed (" + doneG.length + ")"}</button>` : ""}`;
   } else {
     const key = ui.gtab, list = g[key].slice().sort((a, b) => ({ 1: 0, 0: 1, 2: 2 }[a.s] - { 1: 0, 0: 1, 2: 2 }[b.s]));
     const lab = ["To start", "In progress", "Done"];
     if (key === "books") body = `<div class="books">${list.map(x => `<div class="bk"><button style="display:block;width:100%" data-act="bedit" data-k="books" data-id="${x.id}">${coverHtml(x)}</button><b>${esc(x.t)}</b><button class="state s${x.s}" data-act="bstate" data-k="books" data-id="${x.id}">${lab[x.s]}</button></div>`).join("") || `<div class="empty">Nothing here yet</div>`}</div>
     <button class="btn ghost sm" style="margin-top:16px" data-act="badd" data-k="books">+ Add book</button>
-    <div class="note">Covers are found automatically from the title. Tap the label to move a book along: To start, In progress, Done.</div>`;
+    <div class="note">Covers are found automatically from the title. If one is wrong or missing, tap the book to fix the title, or use "Cover photo" to add your own. Tap the label to move a book along: To start, In progress, Done.</div>`;
     else body = `<div class="card" style="margin-top:14px">${list.map(x => `<div class="row"><span class="ib">${ic(key === "books" ? "book" : "growth", 18)}</span><div class="tx" data-act="bedit" data-k="${key}" data-id="${x.id}"><div class="t1">${esc(x.t)}</div>${x.doneAt ? `<div class="t2">Finished ${nice(x.doneAt)}</div>` : ""}</div><button class="state s${x.s}" data-act="bstate" data-k="${key}" data-id="${x.id}">${lab[x.s]}</button></div>`).join("") || `<div class="empty">Nothing here yet</div>`}</div>
     <button class="btn ghost sm" style="margin-top:12px" data-act="badd" data-k="${key}">+ Add ${key === "books" ? "book" : "course"}</button>
     <div class="note">Tap the label to move it along: To start, In progress, Done.</div>`;
@@ -661,6 +695,7 @@ PAGES.settings = function () {
   <div class="card">
     <div class="row" data-act="import"><span class="ib">${ic("inbox", 18)}</span><div class="tx"><div class="t1">Import data file</div><div class="t2">Load the file Claude prepared for you</div></div></div>
     <div class="row" data-act="export"><span class="ib">${ic("book", 18)}</span><div class="tx"><div class="t1">Download a backup</div><div class="t2">Everything in one file</div></div></div>
+    <div class="row" data-act="restore"><span class="ib">${ic("trophy", 18).replace(IC.trophy, '<path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l3 2"/>')}</span><div class="tx"><div class="t1">Restore a backup</div><div class="t2">A copy is saved every day, kept for 7 days</div></div></div>
     <div class="row" data-act="cardlist"><span class="ib">${ic("member", 18)}</span><div class="tx"><div class="t1">Credit cards</div><div class="t2">${doc("hq-money").cardList.map(esc).join(", ")}</div></div></div>
   </div>
   <div class="card" style="margin-top:14px"><div class="row"><div class="tx"><div class="t1">Sync</div><div class="t2">${esc(syncState)}</div></div></div><div class="row"><div class="tx"><div class="t1">Signed in</div><div class="t2">${esc(USER && USER.email)}</div></div></div></div>
@@ -797,7 +832,10 @@ const ACT = {
   back: () => { ui.page = null; render(); window.scrollTo(0, 0); },
   plus: () => plusSheet(),
   tf: el => { ui.tf = el.dataset.v; saveUi(); render(); },
-  tdone: el => { const t = findIn("hq-tasks", "items", el.dataset.id); t.done = !t.done; t.doneAt = t.done ? TODAY : null; save("hq-tasks"); render(); },
+  tdone: el => { const t = findIn("hq-tasks", "items", el.dataset.id); t.done = !t.done; t.doneAt = t.done ? TODAY : null; save("hq-tasks");
+    if (t.done) { const row = el.closest(".row"); row.classList.add("done"); el.innerHTML = ic("check", 15, 3); row.style.transition = "opacity .35s"; setTimeout(() => { row.style.opacity = "0"; }, 450); setTimeout(render, 800); toast("Done ✓"); } else render(); },
+  showdone: () => { ui.showDone = !ui.showDone; render(); },
+  showdoneg: () => { ui.showDoneG = !ui.showDoneG; render(); },
   tstar: el => { const t = findIn("hq-tasks", "items", el.dataset.id); t.star = !t.star; save("hq-tasks"); render(); if (t.star) toast("Pinned as a milestone"); },
   tedit: el => taskSheet(el.dataset.id),
   cleardone: () => { doc("hq-tasks").items.forEach(t => { if (t.done) t.arch = true; }); save("hq-tasks"); render(); toast("Cleared"); },
@@ -833,7 +871,7 @@ const ACT = {
   gtab: el => { ui.gtab = el.dataset.v; saveUi(); render(); },
   gkind: el => { ui.gkind = el.dataset.v; saveUi(); render(); },
   gopen: el => { ui.openGoal = ui.openGoal === el.dataset.id ? null : el.dataset.id; render(); },
-  gdone: el => { const g = findIn("hq-growth", "goals", el.dataset.id); g.done = !g.done; g.doneAt = g.done ? TODAY : null; save("hq-growth"); render(); if (g.done) toast("Goal completed"); },
+  gdone: el => { const g = findIn("hq-growth", "goals", el.dataset.id); g.done = !g.done; g.doneAt = g.done ? TODAY : null; save("hq-growth"); if (g.done) { ui.openGoal = null; toast("Goal completed 🎉"); setTimeout(render, 500); } else render(); },
   sdone: el => { const g = findIn("hq-growth", "goals", el.dataset.g), s = g.steps.find(x => x.id === el.dataset.id); s.done = !s.done; s.doneAt = s.done ? TODAY : null; save("hq-growth"); render(); },
   sdel: el => { const g = findIn("hq-growth", "goals", el.dataset.g); g.steps = g.steps.filter(x => x.id !== el.dataset.id); save("hq-growth"); render(); },
   gadd: () => simpleSheet("New goal", [{ k: "t", label: "Goal", req: 1 }, { k: "kind", label: "Type", type: "select", opts: [["personal", "Personal"], ["pro", "Professional"]] }], { t: "", kind: ui.gkind }, v => { const g = { id: uid(), t: v.t, kind: v.kind, steps: [], done: false }; doc("hq-growth").goals.push(g); ui.openGoal = g.id; ui.gkind = v.kind; save("hq-growth"); }),
@@ -841,7 +879,8 @@ const ACT = {
   gdel: el => confirmSheet("Delete goal?", "This removes the goal and its steps.", "Delete", () => { const gs = doc("hq-growth"); gs.goals = gs.goals.filter(x => x.id !== el.dataset.id); save("hq-growth"); render(); }),
   bstate: el => { const x = findIn("hq-growth", el.dataset.k, el.dataset.id); x.s = (x.s + 1) % 3; x.doneAt = x.s === 2 ? TODAY : null; save("hq-growth"); render(); if (x.s === 2) toast("Nice one. Added to Year in Review"); },
   badd: el => { const k = el.dataset.k; simpleSheet(k === "books" ? "New book" : "New course", [{ k: "t", label: "Title", req: 1 }], { t: "" }, v => { doc("hq-growth")[k].push({ id: uid(), t: v.t, s: 0 }); save("hq-growth"); }); },
-  bedit: el => { const k = el.dataset.k, l = doc("hq-growth")[k], x = l.find(z => z.id === el.dataset.id); simpleSheet("Edit", [{ k: "t", label: "Title", req: 1 }], x, v => { if (x.t !== v.t) { delete x.cover; delete x.author; } x.t = v.t; save("hq-growth"); }, () => { l.splice(l.indexOf(x), 1); save("hq-growth"); }); },
+  bedit: el => { const k = el.dataset.k, l = doc("hq-growth")[k], x = l.find(z => z.id === el.dataset.id); simpleSheet("Edit", [{ k: "t", label: "Title", req: 1 }], x, v => { if (x.t !== v.t) { delete x.cv2; delete x.img; delete x.author; } x.t = v.t; save("hq-growth"); }, () => { l.splice(l.indexOf(x), 1); save("hq-growth"); });
+    if (k === "books") $("#sheet #f").insertAdjacentHTML("beforeend", `<button type="button" class="btn ghost" data-act="photo" data-k="b-${x.id}" data-l="Cover photo">Cover photo</button>`); },
   padd: () => personSheet(), pedit: el => personSheet(el.dataset.id),
   wadd: () => simpleSheet("Add to wishlist", [{ k: "t", label: "What", req: 1 }, { k: "price", label: "Price (optional)", num: 1 }], { t: "", price: "" }, v => { doc("hq-wish").items.push({ id: uid(), t: v.t, price: v.price, got: false }); save("hq-wish"); }),
   wedit: el => { const l = doc("hq-wish").items, w = l.find(x => x.id === el.dataset.id); simpleSheet("Edit", [{ k: "t", label: "What", req: 1 }, { k: "price", label: "Price (optional)", num: 1 }], w, v => { Object.assign(w, v); save("hq-wish"); }, () => { l.splice(l.indexOf(w), 1); save("hq-wish"); }); },
@@ -854,6 +893,7 @@ const ACT = {
       v => { v.exp = v.exp || null; if (id) Object.assign(x, v); else l.push(Object.assign({ id: uid() }, v)); save("hq-members"); }, id ? () => { l.splice(l.indexOf(x), 1); save("hq-members"); } : null); },
   copy: el => { const v = el.dataset.v; (navigator.clipboard ? navigator.clipboard.writeText(v) : Promise.reject()).then(() => toast("Copied " + v), () => toast(v)); },
   import: () => $("#file").click(),
+  restore: () => restoreSheet(),
   export: () => { const blob = new Blob([JSON.stringify({ _rubyshq: 1, docs: Object.assign(Object.fromEntries(Object.keys(BLANK).map(k => [k, doc(k)])), Object.fromEntries(Object.keys(D).filter(k => k.startsWith("hq-img-")).map(k => [k, D[k]]))) }, null, 1)], { type: "application/json" });
     const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "rubys-hq-backup-" + TODAY + ".json"; a.click(); },
   logout: () => confirmSheet("Sign out?", "Your data stays safe in your account.", "Sign out", async () => { await sb.auth.signOut(); }),
