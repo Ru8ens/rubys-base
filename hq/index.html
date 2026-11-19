@@ -185,6 +185,13 @@ svg{display:block}
 .wnum{font-size:24px;font-weight:700;letter-spacing:.06em;margin:26px 0 4px;font-variant-numeric:tabular-nums}
 .wact{display:flex;gap:8px;margin-top:16px;flex-wrap:wrap}
 .wact button{background:#ffffff2e;color:inherit;border-radius:10px;padding:8px 12px;font-size:13px;font-weight:600;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+.knum{font-size:13px;font-weight:700;color:var(--mute);width:12px;text-align:center}
+.keys .row{min-height:60px}.keys .t1{font-size:16px}
+.kfoot{padding:10px 14px 12px;font-size:12.5px;font-weight:600;color:var(--sub);border-top:1px solid var(--line)}
+.kplan{padding:18px 16px}
+.pick{display:flex;align-items:center;gap:12px;padding:12px 14px;width:100%;text-align:left}
+.pick+.pick{border-top:1px solid var(--line)}
+.pick.on{background:var(--blue-soft)}
 .streak{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:700;color:#b45309;background:#fff4e0;padding:6px 10px;border-radius:99px}
 </style>
 </head>
@@ -299,7 +306,7 @@ const SB_KEY = "sb_publishable_vuHW2Qd2sM--cev4Bj49XQ_v09_4h0f";
 const sb = window.supabase.createClient(SB_URL, SB_KEY, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true } });
 let USER = null; const D = {}; const dirty = new Set(); let flushTimer = null; let syncState = "Not synced yet";
 const BLANK = {
-  "hq-tasks": () => ({ items: [] }), "hq-events": () => ({ items: [] }), "hq-people": () => ({ items: [] }), "hq-wish": () => ({ items: [] }), "hq-members": () => ({ items: [] }), "hq-charlotte": () => ({ profile: {}, matches: [], notes: [] }),
+  "hq-tasks": () => ({ items: [] }), "hq-events": () => ({ items: [] }), "hq-people": () => ({ items: [] }), "hq-wish": () => ({ items: [] }), "hq-members": () => ({ items: [] }), "hq-charlotte": () => ({ profile: {}, matches: [], notes: [] }), "hq-journal": () => ({ days: {} }),
   "hq-growth": () => ({ goals: [], books: [], courses: [] }),
   "hq-money": () => ({ accounts: [], debts: [], incoming: [], fixed: [], expenses: [], noSpend: [], cards: {}, cardList: ["Amex Platinum", "Iberia Icon"], trips: [], snap: {} }),
 };
@@ -536,8 +543,19 @@ VIEWS.home = function () {
     today += `<div class="row"><span class="ib dark">${ic("cake", 19)}</span><div class="tx"><div class="t1">${esc(p.name)}'s birthday</div><div class="t2">${age ? "Turns " + age : "Today"}</div></div>
       <button class="pill ${hi ? "ok" : ""}" data-act="sayhi" data-id="${p.id}">${hi ? "Done ✓" : "Say hi"}</button></div>`; });
   todayE.forEach(e => today += `<div class="row" data-act="eedit" data-id="${e.id}"><span class="ib">${ic("cal", 19)}</span><div class="tx"><div class="t1">${esc(e.title)}</div><div class="t2">${e.time ? esc(e.time) + (e.end ? " – " + esc(e.end) : "") : "All day"}</div></div></div>`);
-  dueT.forEach(t => today += taskRow(t, { hideDate: t.due === TODAY }));
-  if (!today) today = `<div class="empty">Nothing due today. Enjoy it.</div>`;
+  // key things for today (daily plan)
+  const day = doc("hq-journal").days[TODAY], keys = day && day.keys && day.keys.length ? day.keys : null;
+  const keyIds = new Set(keys ? keys.filter(k => k.task).map(k => k.task) : []);
+  let keyHtml;
+  if (keys) {
+    const st = keys.map(k => { const t = k.task && tasks.find(x => x.id === k.task); return { k, t, done: t ? !!t.done : !!k.done }; });
+    const nd = st.filter(x => x.done).length;
+    keyHtml = st.map(({ k, t, done }, i) => { const p = t && PROJ[t.p];
+      return `<div class="row ${done ? "done" : ""}"><span class="knum">${i + 1}</span><button class="cb" data-act="kdone" data-i="${i}">${done ? ic("check", 15, 3) : ""}</button><div class="tx" ${t ? `data-act="tedit" data-id="${t.id}"` : ""}><div class="t1">${esc(t ? t.t : k.t)}</div>${p ? `<div class="t2" style="color:${p[1]};font-weight:700">${p[0]}</div>` : ""}</div></div>`; }).join("")
+      + `<div class="kfoot">${nd === keys.length ? "All key things done. Anything below is a bonus." : nd + " of " + keys.length + " done"}</div>`;
+  } else keyHtml = `<div class="kplan"><div class="t1">What are today's key things?</div><div class="t2">Pick up to 3. Everything else goes under "If there's time".</div><button class="pill" data-act="plan" style="margin-top:12px">Plan my day</button></div>`;
+  const extra = dueT.filter(t => !keyIds.has(t.id));
+  let extraHtml = extra.map(t => taskRow(t, { hideDate: t.due === TODAY })).join("") || `<div class="empty">Nothing else due. Enjoy it.</div>`;
   // week
   const we = weekEnd();
   const wkStar = tasks.filter(t => !t.done && t.star && (!t.due || (t.due > TODAY && t.due <= we))).sort((a, b) => (a.due || "9").localeCompare(b.due || "9"));
@@ -556,8 +574,11 @@ VIEWS.home = function () {
     <div class="lbl">Net worth</div><div class="nw">${bigMoney(T.nw)}</div>
     <div class="pl2"><span>${ch == null ? "" : (ch > 0 ? "↑ " : "↓ ") + money(Math.abs(ch)) + " this month"}</span><span>${T.incoming ? "+" + money(T.incoming) + " on its way" : ""}</span></div></button>
   ${rems.join("")}
-  <div class="sec"><h2>Today</h2><a>${DOW[NOW.getDay()].slice(0, 3)} ${NOW.getDate()} ${MONTHS[NOW.getMonth()].slice(0, 3)}</a></div>
-  <div class="card">${today}</div>
+  <div class="sec"><h2>Key things</h2><a data-act="plan">${keys ? "Edit" : DOW[NOW.getDay()].slice(0, 3) + " " + NOW.getDate() + " " + MONTHS[NOW.getMonth()].slice(0, 3)}</a></div>
+  <div class="card keys">${keyHtml}</div>
+  ${today ? `<div class="sec"><h2>Today</h2></div><div class="card">${today}</div>` : ""}
+  <div class="sec"><h2>If there's time</h2><a>${extra.length || ""}</a></div>
+  <div class="card">${extraHtml}</div>
   <div class="sec"><h2>This week</h2><a data-act="tab" data-v="tasks">See all</a></div>
   <div class="card">${week}</div>
   <div class="sec"><h2>Your life</h2></div>
@@ -634,7 +655,7 @@ VIEWS.money = function () {
 function cardMonths() { const out = []; for (let i = 1; i <= 4; i++) out.push(ym(new Date(NOW.getFullYear(), NOW.getMonth() - i, 1))); return out; }
 
 VIEWS.more = function () {
-  const items = [["growth", "Growth", "Goals, books and courses", "growth"], ["people", "People", "Birthdays", "people"], ["wish", "Wishlist", "Things you want", "wish"], ["member", "Memberships", "Airlines, hotels, cars", "members"], ["trophy", "Year in Review", NOW.getFullYear() + " so far", "review"], ["gear", "Settings", "Import, backup, sign out", "settings"]];
+  const items = [["growth", "Growth", "Goals, books and courses", "growth"], ["people", "People", "Birthdays", "people"], ["wish", "Wishlist", "Things you want", "wish"], ["member", "Memberships", "Airlines, hotels, cars", "members"], ["book", "Journal", "Your key things, day by day", "journal"], ["trophy", "Year in Review", NOW.getFullYear() + " so far", "review"], ["gear", "Settings", "Import, backup, sign out", "settings"]];
   return `<div class="ptitle">More</div><div class="card">${items.map(([i, n, s, p]) => `<div class="row" data-act="go" data-p="${p}"><span class="ib">${ic(i, 19)}</span><div class="tx"><div class="t1">${n}</div><div class="t2">${s}</div></div><span style="color:var(--mute)">${ic("chev", 18)}</span></div>`).join("")}</div>`;
 };
 
@@ -729,6 +750,45 @@ PAGES.members = function () {
   <button class="btn" style="margin-top:18px" data-act="madd">+ Add membership</button><div class="note">Add a picture of your real card from "Card picture". Set an expiry date to get a reminder a month before.</div>`;
 };
 
+PAGES.journal = function () {
+  const J = doc("hq-journal"), tasks = doc("hq-tasks").items, ds = Object.keys(J.days).sort().reverse().slice(0, 60);
+  const dayHtml = d => { const day = J.days[d], ks = day.keys || []; const st = ks.map(k => { const t = k.task && tasks.find(x => x.id === k.task); return { txt: t ? t.t : k.t, done: t ? !!t.done : !!k.done }; });
+    return `<div class="card" style="margin-bottom:12px"><div class="row" style="min-height:48px"><div class="tx"><div class="t1">${d === TODAY ? "Today" : nice(d)}${d !== TODAY && nice(d).length < 10 ? " · " + parse(d).getDate() + " " + MONTHS[parse(d).getMonth()].slice(0, 3) : ""}</div></div><span class="state ${st.length && st.every(x => x.done) ? "s2" : "s0"}">${st.filter(x => x.done).length}/${st.length}</span></div>
+      ${st.map(x => `<div class="row ${x.done ? "done" : ""}" style="min-height:44px"><span class="cb" style="width:20px;height:20px;${x.done ? "background:var(--blue);border-color:var(--blue);color:#fff" : ""}">${x.done ? ic("check", 12, 3) : ""}</span><div class="tx"><div class="t1" style="font-size:14px;font-weight:500">${esc(x.txt)}</div></div></div>`).join("")}
+      ${day.note ? `<div class="row" data-act="jnote" data-d="${d}"><div class="tx"><div class="t2" style="white-space:pre-wrap;color:var(--ink);font-size:14px">${esc(day.note)}</div></div></div>` : ""}</div>`; };
+  return `${backBtn()}<div class="ptitle">Journal</div>
+  <div style="display:flex;gap:10px;margin-bottom:14px"><button class="btn sm" style="margin:0" data-act="plan">Plan today</button><button class="btn ghost sm" style="margin:0" data-act="jnote" data-d="${TODAY}">Note for today</button></div>
+  ${ds.map(dayHtml).join("") || `<div class="card"><div class="empty">Your days will appear here once you plan your first one.</div></div>`}`;
+};
+function planSheet() {
+  const J = doc("hq-journal"), tasks = doc("hq-tasks").items, cur = (J.days[TODAY] && J.days[TODAY].keys) || [];
+  const we = weekEnd(), seen = new Set(), sug = [];
+  const add = (t, why) => { if (!t.done && !t.arch && !seen.has(t.id)) { seen.add(t.id); sug.push([t, why]); } };
+  tasks.filter(t => t.due && t.due < TODAY).sort((a, b) => a.due.localeCompare(b.due)).forEach(t => add(t, "Overdue"));
+  tasks.filter(t => t.due === TODAY).forEach(t => add(t, "Due today"));
+  tasks.filter(t => t.star).forEach(t => add(t, "Milestone"));
+  tasks.filter(t => t.due > TODAY && t.due <= we).sort((a, b) => a.due.localeCompare(b.due)).forEach(t => add(t, nice(t.due)));
+  let sel = cur.map(k => k.task ? { task: k.task } : { t: k.t, done: k.done });
+  const own = () => sel.filter(k => !k.task);
+  const draw = sh => {
+    sh.querySelector("#own").innerHTML = own().map((k, i) => `<div class="pick on"><span class="cb" style="background:var(--blue);border-color:var(--blue);color:#fff">${ic("check", 14, 3)}</span><div class="tx"><div class="t1">${esc(k.t)}</div><div class="t2">Your own</div></div><button type="button" data-rm="${i}" style="color:var(--mute);font-size:20px;padding:0 6px">×</button></div>`).join("");
+    sh.querySelectorAll("[data-tid]").forEach(b => { const on = sel.some(k => k.task === b.dataset.tid); b.classList.toggle("on", on); b.querySelector(".cb").innerHTML = on ? ic("check", 14, 3) : ""; b.querySelector(".cb").style.cssText = on ? "background:var(--blue);border-color:var(--blue);color:#fff" : ""; });
+    sh.querySelector("#cnt").textContent = sel.length + " of 3";
+    sh.querySelectorAll("[data-rm]").forEach(b => b.onclick = () => { const o = own()[+b.dataset.rm]; sel = sel.filter(k => k !== o); draw(sh); });
+  };
+  openSheet(`<h3>Today's key things <span class="t2" id="cnt" style="font-weight:600"></span></h3>
+    <div class="card" id="own" style="margin-bottom:10px"></div>
+    <form id="ownf" style="display:flex;gap:8px;margin-bottom:14px"><input class="inp" name="t" placeholder="Add your own, e.g. Call Ersel" style="flex:1"><button class="pill" type="submit">Add</button></form>
+    <div class="t2" style="margin:0 4px 8px;font-weight:700">Suggested from your tasks</div>
+    <div class="card">${sug.slice(0, 14).map(([t, why]) => { const p = PROJ[t.p] || PROJ.other; return `<button type="button" class="pick" data-tid="${t.id}"><span class="cb"></span><div class="tx"><div class="t1">${esc(t.t)}</div><div class="t2"><span style="color:${p[1]};font-weight:700">${p[0]}</span> · ${why}</div></div></button>`; }).join("") || `<div class="empty">No due or starred tasks. Add your own above.</div>`}</div>
+    <button class="btn" id="save" style="margin-top:14px">Save my plan</button>`, sh => {
+    draw(sh);
+    sh.querySelectorAll("[data-tid]").forEach(b => b.onclick = () => { const id = b.dataset.tid, i = sel.findIndex(k => k.task === id);
+      if (i >= 0) sel.splice(i, 1); else if (sel.length >= 3) { toast("Pick up to 3"); return; } else sel.push({ task: id }); draw(sh); });
+    sh.querySelector("#ownf").onsubmit = e => { e.preventDefault(); const v = e.target.t.value.trim(); if (!v) return; if (sel.length >= 3) { toast("Pick up to 3"); return; } sel.push({ t: v, done: false }); e.target.t.value = ""; draw(sh); };
+    sh.querySelector("#save").onclick = () => { J.days[TODAY] = Object.assign(J.days[TODAY] || {}, { keys: sel }); save("hq-journal"); closeSheet(); render(); toast(sel.length ? "Plan saved. Go get them." : "Plan cleared"); };
+  });
+}
 PAGES.review = function () {
   const y = String(NOW.getFullYear()), inY = d => d && d.slice(0, 4) === y, g = doc("hq-growth");
   const s = [["Tasks done", doc("hq-tasks").items.filter(t => t.done && inY(t.doneAt)).length], ["Steps done", g.goals.reduce((a, x) => a + x.steps.filter(st => st.done && inY(st.doneAt)).length, 0)],
@@ -892,6 +952,12 @@ const ACT = {
       v => { if (id) Object.assign(m, v); else l.push(Object.assign({ id: uid() }, v)); save("hq-charlotte"); }, id ? () => { l.splice(l.indexOf(m), 1); save("hq-charlotte"); } : null); },
   cnote: el => { const l = doc("hq-charlotte").notes, id = el.dataset.id, n = id ? l.find(x => x.id === id) : { t: "" };
     simpleSheet(id ? "Edit note" : "New note", [{ k: "t", label: "Note", req: 1 }], n, v => { if (id) n.t = v.t; else l.push({ id: uid(), t: v.t, date: TODAY }); save("hq-charlotte"); }, id ? () => { l.splice(l.indexOf(n), 1); save("hq-charlotte"); } : null); },
+  plan: () => planSheet(),
+  kdone: el => { const day = doc("hq-journal").days[TODAY], k = day.keys[+el.dataset.i]; const t = k.task && doc("hq-tasks").items.find(x => x.id === k.task);
+    if (t) { t.done = !t.done; t.doneAt = t.done ? TODAY : null; save("hq-tasks"); } else { k.done = !k.done; save("hq-journal"); }
+    render(); const all = day.keys.every(x => { const tt = x.task && doc("hq-tasks").items.find(y => y.id === x.task); return tt ? tt.done : x.done; }); if (all) toast("All key things done 🎉"); },
+  jnote: el => { const J = doc("hq-journal"), d = el.dataset.d || TODAY, day = J.days[d] || (J.days[d] = { keys: [] });
+    simpleSheet("Note for " + (d === TODAY ? "today" : nice(d)), [{ k: "note", label: "How did it go? Wins, lessons, anything" }], { note: day.note || "" }, v => { day.note = v.note; save("hq-journal"); }); },
   showdone: () => { ui.showDone = !ui.showDone; render(); },
   showdoneg: () => { ui.showDoneG = !ui.showDoneG; render(); },
   tstar: el => { const t = findIn("hq-tasks", "items", el.dataset.id); t.star = !t.star; save("hq-tasks"); render(); if (t.star) toast("Pinned as a milestone"); },
@@ -974,6 +1040,10 @@ $("#file").addEventListener("change", async e => {
   const file = e.target.files[0]; e.target.value = ""; if (!file) return;
   let j; try { j = JSON.parse(await file.text()); } catch (err) { toast("That file couldn't be read"); return; }
   if (!j || !j.docs) { toast("That isn't a Ruby's HQ file"); return; }
+  if (j.merge) { // add new items next to what's already there, never replace
+    let n = 0; Object.entries(j.docs).forEach(([name, d]) => { if (!BLANK[name] || !d || !Array.isArray(d.items)) return; const cur = doc(name);
+      d.items.forEach(it => { const dup = cur.items.some(x => (x.name || x.t || "").toLowerCase() === (it.name || it.t || "").toLowerCase() && x.d === it.d && x.m === it.m); if (!dup) { cur.items.push(it); n++; } }); save(name); });
+    render(); toast(n ? "Added " + n : "Nothing new to add"); return; }
   const names = Object.keys(j.docs).filter(k => BLANK[k] || k.startsWith("hq-img-"));
   const LABEL = { "hq-tasks": "Tasks", "hq-money": "Money (accounts, debts, fixed costs)", "hq-growth": "Growth (goals, books, courses)", "hq-wish": "Wishlist", "hq-members": "Memberships", "hq-people": "Birthdays", "hq-events": "Meetings & events", "hq-charlotte": "Charlotte" };
   const main = names.filter(n => LABEL[n]), imgs = names.filter(n => n.startsWith("hq-img-"));
