@@ -456,10 +456,11 @@ function taskRow(t, opts = {}) {
 const PHOTO = { tasks: "1522202176988-66273c2fd55f", money: "1477959858617-67f85cf4f1df",
   "p-arowana": "https://static.wixstatic.com/media/29f6ba_a5e98b8d3c28408986b37d396f9865b7~mv2.jpg/v1/fill/w_1000,h_660,al_c,q_80/stadium.jpg",
   "p-tfw": "https://cdn.thefootballweek.com/wp-content/uploads/2026/11/Estadio-Maracana-Brazil-696x392.jpg",
-  "p-grow": "1579952363873-27f3bade9f55", "p-charlotte": "brand/charlotte.jpg", "p-personal": "1543783207-ec64e4d95325", growth: "1481627834876-b7833e8f5570", people: "1529156069898-49953e39b3ac", wish: "1523170335258-f5ed11844a49", members: "1436491865332-7a61a109cc05" };
+  "p-grow": "https://static.wixstatic.com/media/ac69bc_e9230b4e60ea44f1b47c3e725f24f256~mv2.jpeg/v1/fill/w_908,h_1080,al_c,q_85/stadium.jpeg", "p-charlotte": "brand/charlotte.jpg", "p-personal": "1543783207-ec64e4d95325", growth: "1481627834876-b7833e8f5570", people: "1529156069898-49953e39b3ac", wish: "1523170335258-f5ed11844a49", members: "1436491865332-7a61a109cc05" };
 // Brand banners, matching the documents made for each company
 const BRAND = {
   arowana: { logo: "https://static.wixstatic.com/media/29f6ba_66cf84d66fb44e778d16a66f2985a9d8~mv2.avif/v1/fill/w_446,h_344,al_c,q_80,usm_0.66_1.00_0.01,enc_avif,quality_auto/Arowana%20Logo-01_png.avif", bg: "#050706", rule: "linear-gradient(90deg,#00FCBA,#B9E53A)", lh: 96 },
+  grow: { logo: "https://static.wixstatic.com/media/ac69bc_184c54df35e84879b64c567afe0cfbc9~mv2.png/v1/fill/w_545,h_150,al_c,q_90/Logo_white.png", bg: "#050505", rule: "linear-gradient(90deg,#22d3ee,#0ea5e9)", lh: 50 },
   tfw: { logo: "brand/tfw-white.png", bg: "#0b0b0b", rule: "linear-gradient(90deg,#ffffff,#6b6b6b)", lh: 62 },
 };
 function brandBanner(k, sub) { const b = BRAND[k], ph = imgOf("p-" + k);
