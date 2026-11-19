@@ -152,6 +152,7 @@ svg{display:block}
 .copy{font-size:12px;font-weight:600;color:var(--blue);background:var(--blue-soft);padding:5px 9px;border-radius:9px}
 /* photos */
 .ptile{position:relative;height:150px;border-radius:20px;overflow:hidden;background:#cfd3d8 center/cover no-repeat;color:#fff;text-align:left;padding:14px;display:flex;flex-direction:column;justify-content:flex-end;box-shadow:0 6px 16px #0002}
+.grid .ptile:last-child:nth-child(odd){grid-column:1/-1;height:170px}
 .ptile:before{content:"";position:absolute;inset:0;background:linear-gradient(180deg,#0000 30%,#000b)}
 .ptile>*{position:relative} .ptile b{font-size:17px;letter-spacing:-.02em} .ptile small{font-size:12.5px;font-weight:600;opacity:.92}
 .banner{position:relative;height:190px;border-radius:24px;overflow:hidden;background:#cfd3d8 center/cover no-repeat;color:#fff;padding:18px 20px;display:flex;flex-direction:column;justify-content:flex-end;margin:4px 0 16px;box-shadow:0 10px 24px #0002}
@@ -298,7 +299,7 @@ const SB_KEY = "sb_publishable_vuHW2Qd2sM--cev4Bj49XQ_v09_4h0f";
 const sb = window.supabase.createClient(SB_URL, SB_KEY, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true } });
 let USER = null; const D = {}; const dirty = new Set(); let flushTimer = null; let syncState = "Not synced yet";
 const BLANK = {
-  "hq-tasks": () => ({ items: [] }), "hq-events": () => ({ items: [] }), "hq-people": () => ({ items: [] }), "hq-wish": () => ({ items: [] }), "hq-members": () => ({ items: [] }),
+  "hq-tasks": () => ({ items: [] }), "hq-events": () => ({ items: [] }), "hq-people": () => ({ items: [] }), "hq-wish": () => ({ items: [] }), "hq-members": () => ({ items: [] }), "hq-charlotte": () => ({ profile: {}, matches: [], notes: [] }),
   "hq-growth": () => ({ goals: [], books: [], courses: [] }),
   "hq-money": () => ({ accounts: [], debts: [], incoming: [], fixed: [], expenses: [], noSpend: [], cards: {}, cardList: ["Amex Platinum", "Iberia Icon"], trips: [], snap: {} }),
 };
@@ -539,7 +540,7 @@ VIEWS.home = function () {
   const nOpen = openTasks().length, gl = doc("hq-growth").goals.filter(g => !g.done).length;
   const upB = ppl.filter(p => daysTo(nextBday(p)) <= 7).length;
   const tiles = [["tasks", "Tasks", nOpen + " open", "tab:tasks"], ["money", "Money", m.incoming.length ? money(T.incoming, "EUR", { whole: true }) + " on its way" : "Spending & accounts", "tab:money"], ["growth", "Growth", gl + " goals", "growth"],
-    ["people", "People", upB ? upB + " this week" : ppl.length + " birthdays", "people"], ["wish", "Wishlist", doc("hq-wish").items.filter(w => !w.got).length + " items", "wish"], ["members", "Memberships", doc("hq-members").items.length + " cards", "members"]];
+    ["people", "People", upB ? upB + " this week" : ppl.length + " birthdays", "people"], ["wish", "Wishlist", doc("hq-wish").items.filter(w => !w.got).length + " items", "wish"], ["members", "Memberships", doc("hq-members").items.length + " cards", "members"], ["charlotte", "Charlotte", charlotteSub(), "charlotte"]];
   return `<div class="top"><div><div class="hi">${greet}</div><div class="nm">Rubén</div></div><button class="av" data-act="go" data-p="settings">R</button></div>
   <button class="plat" style="width:100%;text-align:left;display:block" data-act="tab" data-v="money"><div class="pl1"><span>RUBY'S HQ</span><span class="chipc"></span></div>
     <div class="lbl">Net worth</div><div class="nw">${bigMoney(T.nw)}</div>
@@ -623,7 +624,7 @@ VIEWS.money = function () {
 function cardMonths() { const out = []; for (let i = 1; i <= 4; i++) out.push(ym(new Date(NOW.getFullYear(), NOW.getMonth() - i, 1))); return out; }
 
 VIEWS.more = function () {
-  const items = [["growth", "Growth", "Goals, books and courses", "growth"], ["people", "People", "Birthdays", "people"], ["wish", "Wishlist", "Things you want", "wish"], ["member", "Memberships", "Airlines, hotels, cars", "members"], ["trophy", "Year in Review", NOW.getFullYear() + " so far", "review"], ["gear", "Settings", "Import, backup, sign out", "settings"]];
+  const items = [["growth", "Growth", "Goals, books and courses", "growth"], ["people", "People", "Birthdays", "people"], ["wish", "Wishlist", "Things you want", "wish"], ["member", "Memberships", "Airlines, hotels, cars", "members"], ["people", "Charlotte", "Player you represent", "charlotte"], ["trophy", "Year in Review", NOW.getFullYear() + " so far", "review"], ["gear", "Settings", "Import, backup, sign out", "settings"]];
   return `<div class="ptitle">More</div><div class="card">${items.map(([i, n, s, p]) => `<div class="row" data-act="go" data-p="${p}"><span class="ib">${ic(i, 19)}</span><div class="tx"><div class="t1">${n}</div><div class="t2">${s}</div></div><span style="color:var(--mute)">${ic("chev", 18)}</span></div>`).join("")}</div>`;
 };
 
@@ -670,6 +671,28 @@ PAGES.people = function () {
   <button class="btn" style="margin-top:14px" data-act="padd">+ Add birthday</button>`;
 };
 
+// ================= Charlotte (player) =================
+const isCharlotte = t => t.who === "charlotte" || /charlotte/i.test(t.t);
+function charlotteSub() { const c = doc("hq-charlotte"), nx = c.matches.filter(m => m.date >= TODAY).sort((a, b) => a.date.localeCompare(b.date))[0];
+  const n = doc("hq-tasks").items.filter(t => !t.done && isCharlotte(t)).length; return nx ? "Next: " + (nx.opp || "match") + " · " + nice(nx.date) : n + " open task" + (n === 1 ? "" : "s"); }
+PAGES.charlotte = function () {
+  const c = doc("hq-charlotte"), pr = c.profile || {};
+  const tasks = doc("hq-tasks").items.filter(t => !t.done && isCharlotte(t)).sort((a, b) => (a.due || "9").localeCompare(b.due || "9"));
+  const up = c.matches.filter(m => m.date >= TODAY).sort((a, b) => a.date.localeCompare(b.date)), past = c.matches.filter(m => m.date < TODAY).sort((a, b) => b.date.localeCompare(a.date)).slice(0, 5);
+  const F = [["club", "Club"], ["position", "Position"], ["contract", "Contract until"], ["nationality", "Nationality"], ["born", "Born"]];
+  const mrow = m => `<div class="row" data-act="cmatch" data-id="${m.id}"><span class="ib">${ic("cal", 18)}</span><div class="tx"><div class="t1">${esc(m.opp || "Match")}</div><div class="t2">${nice(m.date)}${m.time ? " · " + esc(m.time) : ""}${m.note ? " · " + esc(m.note) : ""}</div></div></div>`;
+  return `${backBtn()}${banner("charlotte", esc(pr.name || "Charlotte"), esc([pr.position, pr.club].filter(Boolean).join(" · ") || "Player you represent · GROW"), "#d97706")}
+  <div class="sec"><h2>Profile</h2><a data-act="cprof">Edit</a></div>
+  <div class="card">${F.map(([k, n]) => `<div class="row" data-act="cprof" style="min-height:48px"><div class="tx"><div class="t2" style="margin:0">${n}</div></div><div class="t1" style="text-align:right">${pr[k] ? esc(pr[k]) : `<span style="color:var(--mute);font-weight:500">Add</span>`}</div></div>`).join("")}</div>
+  <div class="sec"><h2>To-dos</h2><a data-act="ctask">+ Add</a></div>
+  <div class="card">${tasks.map(t => taskRow(t)).join("") || `<div class="empty">Nothing pending for Charlotte.</div>`}</div>
+  <div class="sec"><h2>Matches</h2><a data-act="cmatch">+ Add</a></div>
+  <div class="card">${up.map(mrow).join("") || `<div class="empty">No upcoming matches. Add them to plan which ones to watch.</div>`}</div>
+  ${past.length ? `<div class="sec"><h2>Recent</h2></div><div class="card">${past.map(mrow).join("")}</div>` : ""}
+  <div class="sec"><h2>Notes</h2><a data-act="cnote">+ Add</a></div>
+  <div class="card">${c.notes.slice().sort((a, b) => b.date.localeCompare(a.date)).map(n => `<div class="row" data-act="cnote" data-id="${n.id}"><div class="tx"><div class="t1" style="font-weight:500;white-space:pre-wrap">${esc(n.t)}</div><div class="t2">${nice(n.date)}</div></div></div>`).join("") || `<div class="empty">Calls, feedback, ideas: anything to remember.</div>`}</div>
+  <div class="note">Tasks that mention Charlotte show up here automatically, and stay under GROW too.</div>`;
+};
 PAGES.wish = function () {
   const it = doc("hq-wish").items, open = it.filter(w => !w.got), got = it.filter(w => w.got);
   const row = w => `<div class="row ${w.got ? "done" : ""}"><button class="cb" data-act="wgot" data-id="${w.id}">${w.got ? ic("check", 15, 3) : ""}</button><div class="tx" data-act="wedit" data-id="${w.id}"><div class="t1">${esc(w.t)}</div>${w.got && w.gotAt ? `<div class="t2">Got it ${nice(w.gotAt)}</div>` : ""}</div>${w.price ? `<div class="amt">${money(w.price, "EUR", { whole: w.price >= 100 })}</div>` : ""}</div>`;
@@ -851,6 +874,14 @@ const ACT = {
   tf: el => { ui.tf = el.dataset.v; saveUi(); render(); },
   tdone: el => { const t = findIn("hq-tasks", "items", el.dataset.id); t.done = !t.done; t.doneAt = t.done ? TODAY : null; save("hq-tasks");
     if (t.done) { const row = el.closest(".row"); row.classList.add("done"); el.innerHTML = ic("check", 15, 3); row.style.transition = "opacity .35s"; setTimeout(() => { row.style.opacity = "0"; }, 450); setTimeout(render, 800); toast("Done ✓"); } else render(); },
+  cprof: () => { const c = doc("hq-charlotte"); c.profile = c.profile || {};
+    simpleSheet("Charlotte's profile", [{ k: "name", label: "Name shown", ph: "Charlotte" }, { k: "club", label: "Club" }, { k: "position", label: "Position" }, { k: "contract", label: "Contract until", ph: "e.g. June 2027" }, { k: "nationality", label: "Nationality" }, { k: "born", label: "Born", ph: "e.g. 12 March 2003" }], c.profile, v => { Object.assign(c.profile, v); save("hq-charlotte"); }); },
+  ctask: () => simpleSheet("To-do for Charlotte", [{ k: "t", label: "What needs doing?", req: 1 }, { k: "due", label: "Due date (optional)", type: "date" }], { t: "", due: "" }, v => { doc("hq-tasks").items.push({ id: uid(), t: v.t, p: "grow", who: "charlotte", due: v.due || null, star: false, done: false, created: TODAY }); save("hq-tasks"); }),
+  cmatch: el => { const l = doc("hq-charlotte").matches, id = el.dataset.id, m = id ? l.find(x => x.id === id) : { date: TODAY, time: "", opp: "", note: "" };
+    simpleSheet(id ? "Edit match" : "New match", [{ k: "opp", label: "Against", req: 1, ph: "e.g. Benfica" }, { k: "date", label: "Date", type: "date", req: 1 }, { k: "time", label: "Kick-off", type: "time" }, { k: "note", label: "Note", ph: "Home / away, watching it, result…" }], m,
+      v => { if (id) Object.assign(m, v); else l.push(Object.assign({ id: uid() }, v)); save("hq-charlotte"); }, id ? () => { l.splice(l.indexOf(m), 1); save("hq-charlotte"); } : null); },
+  cnote: el => { const l = doc("hq-charlotte").notes, id = el.dataset.id, n = id ? l.find(x => x.id === id) : { t: "" };
+    simpleSheet(id ? "Edit note" : "New note", [{ k: "t", label: "Note", req: 1 }], n, v => { if (id) n.t = v.t; else l.push({ id: uid(), t: v.t, date: TODAY }); save("hq-charlotte"); }, id ? () => { l.splice(l.indexOf(n), 1); save("hq-charlotte"); } : null); },
   showdone: () => { ui.showDone = !ui.showDone; render(); },
   showdoneg: () => { ui.showDoneG = !ui.showDoneG; render(); },
   tstar: el => { const t = findIn("hq-tasks", "items", el.dataset.id); t.star = !t.star; save("hq-tasks"); render(); if (t.star) toast("Pinned as a milestone"); },
@@ -934,7 +965,7 @@ $("#file").addEventListener("change", async e => {
   let j; try { j = JSON.parse(await file.text()); } catch (err) { toast("That file couldn't be read"); return; }
   if (!j || !j.docs) { toast("That isn't a Ruby's HQ file"); return; }
   const names = Object.keys(j.docs).filter(k => BLANK[k] || k.startsWith("hq-img-"));
-  const LABEL = { "hq-tasks": "Tasks", "hq-money": "Money (accounts, debts, fixed costs)", "hq-growth": "Growth (goals, books, courses)", "hq-wish": "Wishlist", "hq-members": "Memberships", "hq-people": "Birthdays", "hq-events": "Meetings & events" };
+  const LABEL = { "hq-tasks": "Tasks", "hq-money": "Money (accounts, debts, fixed costs)", "hq-growth": "Growth (goals, books, courses)", "hq-wish": "Wishlist", "hq-members": "Memberships", "hq-people": "Birthdays", "hq-events": "Meetings & events", "hq-charlotte": "Charlotte" };
   const main = names.filter(n => LABEL[n]), imgs = names.filter(n => n.startsWith("hq-img-"));
   openSheet(`<h3>What should I load?</h3><div class="note" style="margin:0 4px 12px">Ticked sections are replaced by the file. Sections that are empty right now are ticked for you.</div>
     <div class="card">${main.map(n => { const empty = itemCount(doc(n)) === 0; return `<label class="row" style="cursor:pointer"><input type="checkbox" data-n="${n}" ${empty ? "checked" : ""} style="width:22px;height:22px;accent-color:var(--blue)"><div class="tx"><div class="t1">${LABEL[n]}</div><div class="t2">${empty ? "Empty now" : itemCount(doc(n)) + " items now"} · ${itemCount(j.docs[n])} in the file</div></div></label>`; }).join("")}</div>
