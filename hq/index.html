@@ -447,7 +447,7 @@ const BRAND = {
 function brandBanner(k, sub) { const b = BRAND[k], ph = imgOf("p-" + k);
   return `<div class="banner bb" style="background:linear-gradient(90deg,${b.bg} 38%,${b.bg}d9 58%,${b.bg}33),${ph ? `url('${ph}') right center/cover no-repeat,` : ""}${b.bg}">
     <button class="chgph" data-act="photo" data-k="p-${k}">${ic("cal", 13, 2).replace(IC.cal, '<path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/>')}Photo</button>
-    <img src="${b.logo}" alt="" style="height:${b.lh}px;width:auto;align-self:flex-start;margin-bottom:auto;margin-top:${k === "arowana" ? -6 : 18}px"><div class="bs">${sub}</div><span class="brule" style="background:${b.rule}"></span></div>`; }
+    <img src="${b.logo}" alt="" style="height:${b.lh}px;width:auto;${k === "tfw" ? "filter:contrast(5);mix-blend-mode:screen;" : ""}align-self:flex-start;margin-bottom:auto;margin-top:${k === "arowana" ? -6 : 18}px"><div class="bs">${sub}</div><span class="brule" style="background:${b.rule}"></span></div>`; }
 const LOGO = { arowana: "https://static.wixstatic.com/media/8e7a0b_c36f6081c82e4a4e937c5f8551d6ec88%7Emv2.png/v1/fill/w_192%2Ch_192/arowana.png", tfw: "https://thefootballweek.com/wp-content/uploads/2024/10/TFW-icon.png" };
 const imgOf = k => (D["hq-img-" + k] && D["hq-img-" + k].d) || (PHOTO[k] ? (PHOTO[k].startsWith("http") ? PHOTO[k] : `https://images.unsplash.com/photo-${PHOTO[k]}?w=900&q=70&auto=format`) : "");
 const bg = k => { const u = imgOf(k); return u ? `background-image:url('${u}')` : ""; };
