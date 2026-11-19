@@ -877,8 +877,14 @@ $("#file").addEventListener("change", async e => {
   let j; try { j = JSON.parse(await file.text()); } catch (err) { toast("That file couldn't be read"); return; }
   if (!j || !j.docs) { toast("That isn't a Ruby's HQ file"); return; }
   const names = Object.keys(j.docs).filter(k => BLANK[k] || k.startsWith("hq-img-"));
-  confirmSheet("Import this file?", `It will load: ${names.map(n => n.replace("hq-", "")).join(", ")}. Anything already in those sections is replaced.`, "Import", () => {
-    names.forEach(n => { D[n] = j.docs[n]; save(n); }); render(); toast("Imported");
+  const LABEL = { "hq-tasks": "Tasks", "hq-money": "Money (accounts, debts, fixed costs)", "hq-growth": "Growth (goals, books, courses)", "hq-wish": "Wishlist", "hq-members": "Memberships", "hq-people": "Birthdays", "hq-events": "Meetings & events" };
+  const main = names.filter(n => LABEL[n]), imgs = names.filter(n => n.startsWith("hq-img-"));
+  openSheet(`<h3>What should I load?</h3><div class="note" style="margin:0 4px 12px">Ticked sections are replaced by the file. Sections that are empty right now are ticked for you.</div>
+    <div class="card">${main.map(n => { const empty = itemCount(doc(n)) === 0; return `<label class="row" style="cursor:pointer"><input type="checkbox" data-n="${n}" ${empty ? "checked" : ""} style="width:22px;height:22px;accent-color:var(--blue)"><div class="tx"><div class="t1">${LABEL[n]}</div><div class="t2">${empty ? "Empty now" : itemCount(doc(n)) + " items now"} · ${itemCount(j.docs[n])} in the file</div></div></label>`; }).join("")}</div>
+    <button class="btn" id="go">Load ticked sections</button><button class="btn ghost" id="no">Cancel</button>`, sh => {
+    sh.querySelector("#no").onclick = closeSheet;
+    sh.querySelector("#go").onclick = () => { const pick = [...sh.querySelectorAll("input[data-n]:checked")].map(i => i.dataset.n);
+      pick.concat(imgs.filter(n => !(D[n] && D[n].d))).forEach(n => { D[n] = j.docs[n]; save(n); }); closeSheet(); render(); toast(pick.length ? "Loaded " + pick.length + " section" + (pick.length > 1 ? "s" : "") : "Nothing loaded"); };
   });
 });
 
