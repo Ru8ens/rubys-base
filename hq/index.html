@@ -196,6 +196,35 @@ svg{display:block}
 .pick+.pick{border-top:1px solid var(--line)}
 .pick.on{background:var(--blue-soft)}
 .streak{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:700;color:#b45309;background:#fff4e0;padding:6px 10px;border-radius:99px}
+/* this week's calendar */
+textarea.inp{min-height:220px;resize:vertical;line-height:1.45}
+.card.cal{overflow:hidden}
+.calday{padding:12px 14px 10px}
+.calday+.calday{border-top:1px solid var(--line)}
+.calday.today{background:var(--blue-soft)}
+.calhd{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.calhd .dn{font-size:14px;font-weight:700;letter-spacing:-.015em}
+.calhd .dd{margin-left:6px;font-size:13px;font-weight:600;color:var(--sub)}
+.calday.past:not(.today) .dn,.calday.past:not(.today) .dd{color:var(--mute)}
+.calempty{margin-top:6px;font-size:13px;font-weight:500;color:var(--mute)}
+.calev{position:relative;display:flex;align-items:flex-start;gap:10px;padding:8px 0 2px 10px}
+.calev+.calev{margin-top:8px}
+.calev .bar{top:8px;bottom:4px;left:0;background:var(--vc)}
+.caltime{width:92px;flex:none;padding-top:2px;font-size:12.5px;font-weight:700;font-variant-numeric:tabular-nums;line-height:1.2;color:var(--ink);white-space:nowrap}
+.caltime.all{font-size:12px;font-weight:700;color:var(--sub);letter-spacing:.01em}
+.vchip{flex:none;display:inline-flex;align-items:center;gap:5px;margin-top:1px;padding:4px 8px 4px 6px;border-radius:99px;background:var(--vc-soft);color:var(--vc);font-size:11px;font-weight:700;letter-spacing:-.01em;white-space:nowrap}
+.vchip i{width:7px;height:7px;border-radius:50%;background:var(--vc);flex:none}
+.v-arowana{--vc:var(--arowana);--vc-soft:#e8efff}
+.v-tfw{--vc:var(--tfw);--vc-soft:#e5f6f3}
+.v-business{--vc:var(--navy);--vc-soft:#e7eef8}
+.v-personal{--vc:var(--personal);--vc-soft:#f6e9fc}
+.v-other{--vc:var(--other);--vc-soft:#f0f0ed}
+.tent{color:#7a5a00;font-weight:700}
+@media (max-width:560px){
+  .calev{display:grid;grid-template-columns:92px minmax(0,1fr);column-gap:10px;row-gap:6px}
+  .caltime{width:auto}
+  .vchip{grid-column:2;margin:0 0 2px;justify-self:start}
+}
 </style>
 </head>
 <body>
@@ -265,6 +294,8 @@ document.querySelectorAll("[data-ic]").forEach(el => el.outerHTML = ic(el.datase
 
 // ================= Constants =================
 const PROJ = { arowana: ["Arowana", "var(--arowana)"], tfw: ["TFW", "var(--tfw)"], grow: ["GROW", "var(--grow)"], charlotte: ["Charlotte", "var(--charlotte)"], personal: ["Personal", "var(--personal)"], other: ["Other", "var(--other)"] };
+// Calendar chips reuse the project colours. Business has no project colour, so it uses the app navy.
+const VENTURE = { arowana: ["Arowana", "var(--arowana)"], tfw: ["TFW", "var(--tfw)"], business: ["Business", "var(--navy)"], personal: ["Personal", "var(--personal)"] };
 const CATS = { groceries: ["Groceries", "cart"], health: ["Health", "heart"], eat: ["Eating & going out", "fork"], transport: ["Transport & travel", "plane"], shopping: ["Shopping", "bag"], other: ["Other", "dots"] };
 const MTYPES = { air: "Airlines", hotel: "Hotels", car: "Car rental", other: "Other" };
 const CURS = ["EUR", "USD", "GBP", "CHF"];
@@ -310,10 +341,24 @@ const SB_URL = "https://yrwpsbkcmxqyepyhxrhf.supabase.co";
 const SB_KEY = "sb_publishable_vuHW2Qd2sM--cev4Bj49XQ_v09_4h0f";
 const sb = window.supabase.createClient(SB_URL, SB_KEY, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true } });
 let USER = null; const D = {}; const dirty = new Set(); let flushTimer = null; let syncState = "Not synced yet";
+// hq-calendar is this week's digest. A morning job may overwrite this one document and no other.
+// weekOf is the Monday (YYYY-MM-DD). days lists that Monday and the next 6 dates.
+// A missing day, or a day with "events": [], shows "Nothing scheduled".
+// Send all 7 days. An empty days list looks blank to the app's safety net, which will keep the phone's copy.
+// Event fields: title, start "HH:MM", end "HH:MM" (optional), allDay (true when there is no time),
+// venture "arowana" | "tfw" | "business" | "personal",
+// optional with, where, note, status "confirmed" | "tentative" (tentative shows "Not yet accepted"),
+// optional calendar (source name, shown only when it differs from the venture).
+// Example shape only, not real data:
+// { "weekOf": "2026-01-05", "updated": "2026-01-05T06:00:00Z", "days": [
+//   { "date": "2026-01-05", "events": [ { "title": "Weekly meeting", "start": "11:00", "end": "12:30", "venture": "arowana" } ] },
+//   { "date": "2026-01-06", "events": [] }
+// ] }
 const BLANK = {
   "hq-tasks": () => ({ items: [] }), "hq-events": () => ({ items: [] }), "hq-people": () => ({ items: [] }), "hq-wish": () => ({ items: [] }), "hq-members": () => ({ items: [] }), "hq-charlotte": () => ({ profile: {}, matches: [], notes: [] }), "hq-journal": () => ({ days: {} }),
   "hq-growth": () => ({ goals: [], books: [], courses: [] }),
   "hq-money": () => ({ accounts: [], debts: [], incoming: [], fixed: [], expenses: [], noSpend: [], cards: {}, cardList: ["Amex Platinum", "Iberia Icon"], trips: [], snap: {} }),
+  "hq-calendar": () => ({ weekOf: "", updated: "", days: [] }),
 };
 function doc(name) { if (!D[name]) D[name] = BLANK[name](); const b = BLANK[name](); for (const k in b) if (D[name][k] == null) D[name][k] = b[k]; return D[name]; }
 const cacheKey = () => "rubyshq-cache-" + (USER ? USER.id : "anon");
@@ -532,6 +577,93 @@ function brand(x) {
 }
 const cardStyle = x => { const b = brand(x), pic = D["hq-img-m-" + x.id] && D["hq-img-m-" + x.id].d ? D["hq-img-m-" + x.id] : null; return { cls: pic ? "pic" : "", st: pic ? `background-image:url('${pic.d}');color:#fff` : `background:${b.bg};color:${b.fg}`, ac: pic ? "#fff" : b.ac }; };
 
+// ================= This week's calendar =================
+function weekMondayIso(ds) {
+  const d = parse(ds || TODAY), day = d.getDay();
+  return iso(addDays(d, day === 0 ? -6 : 1 - day));
+}
+function hhmm(v) { const m = /^(\d{2}):(\d{2})/.exec(String(v || "").trim()); if (!m) return ""; const h = +m[1], min = +m[2]; return h < 24 && min < 60 ? m[1] + ":" + m[2] : ""; }
+function cleanStr(v) { return String(v == null ? "" : v).trim(); }
+function ventureKey(v) { const k = cleanStr(v).toLowerCase(); return VENTURE[k] ? k : ""; }
+function calendarSource(v) { const k = cleanStr(v); const hit = VENTURE[k.toLowerCase()]; if (hit) return hit[0]; const byName = Object.values(VENTURE).find(x => x[0].toLowerCase() === k.toLowerCase()); return byName ? byName[0] : k; }
+// Accepts the hq-calendar document itself.
+function calendarFromObject(j) {
+  if (!j || typeof j !== "object" || Array.isArray(j)) return { error: "Paste the calendar object, with weekOf and days." };
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(j.weekOf || "")) return { error: "weekOf must be the Monday, as YYYY-MM-DD." };
+  if (parse(j.weekOf).getDay() !== 1) return { error: "weekOf has to be a Monday." };
+  if (!Array.isArray(j.days)) return { error: "days must be a list of dates." };
+  const end = iso(addDays(parse(j.weekOf), 6)), by = {};
+  for (const d of j.days) {
+    if (!d || !/^\d{4}-\d{2}-\d{2}$/.test(d.date || "")) return { error: "Every day needs a date as YYYY-MM-DD." };
+    if (d.date < j.weekOf || d.date > end) return { error: "Every date has to fall in the 7 days from weekOf." };
+    if (d.events != null && !Array.isArray(d.events)) return { error: "Every day needs an events list." };
+    const events = [];
+    for (const ev of d.events || []) {
+      if (!ev || typeof ev !== "object") return { error: "An event could not be read." };
+      const title = cleanStr(ev.title || ev.name);
+      if (!title) return { error: "Every event needs a title." };
+      const key = ventureKey(ev.venture || ev.tag);
+      if (!key) return { error: "Venture must be arowana, tfw, business or personal." };
+      let startT = hhmm(ev.start), endT = hhmm(ev.end);
+      if (!startT && ev.time) {
+        const parts = String(ev.time).trim().split(/\s*[-–—]\s*/);
+        if (parts.length === 2) { startT = hhmm(parts[0]); endT = endT || hhmm(parts[1]); } else startT = hhmm(parts[0]);
+      }
+      const allDay = ev.allDay === true || ev.allday === true || (!startT && !endT);
+      if (!allDay && !startT) return { error: "Add a start time, or set allDay to true." };
+      const status = ev.status === "tentative" || ev.tentative === true || ev.accepted === false ? "tentative" : "confirmed";
+      const event = { title, venture: key };
+      if (allDay) event.allDay = true; else { event.start = startT; if (endT) event.end = endT; }
+      const withP = cleanStr(ev.with || ev.people), where = cleanStr(ev.where || ev.place), note = cleanStr(ev.note), calendar = cleanStr(ev.calendar);
+      if (withP) event.with = withP; if (where) event.where = where; if (note) event.note = note;
+      if (status === "tentative") event.status = "tentative"; if (calendar) event.calendar = calendar;
+      events.push(event);
+    }
+    events.sort((a, b) => (a.allDay || !a.start ? "" : a.start).localeCompare(b.allDay || !b.start ? "" : b.start));
+    by[d.date] = events;
+  }
+  const days = []; for (let i = 0; i < 7; i++) { const date = iso(addDays(parse(j.weekOf), i)); days.push({ date, events: by[date] || [] }); }
+  return { doc: { weekOf: j.weekOf, updated: j.updated || new Date().toISOString(), days } };
+}
+// Also accepts a Ruby's HQ file that contains docs["hq-calendar"].
+function parseCalendar(text) {
+  let j; try { j = JSON.parse(String(text || "").replace(/^\uFEFF/, "")); } catch (e) { return { error: "That text is not JSON." }; }
+  if (j && j.docs && j.docs["hq-calendar"]) j = j.docs["hq-calendar"];
+  else if (j && j["hq-calendar"] && typeof j["hq-calendar"] === "object" && !Array.isArray(j["hq-calendar"])) j = j["hq-calendar"];
+  return calendarFromObject(j);
+}
+function calendarEvent(ev) {
+  const key = VENTURE[ev.venture] ? ev.venture : "other", name = (VENTURE[ev.venture] || ["Other"])[0];
+  const time = ev.allDay || !ev.start ? `<div class="caltime all">All day</div>` : `<div class="caltime">${esc(ev.start)}${ev.end ? "-" + esc(ev.end) : ""}</div>`;
+  const bits = [];
+  if (ev.with) bits.push("With " + esc(ev.with));
+  if (ev.where) bits.push(esc(ev.where));
+  if (ev.note) bits.push(esc(ev.note));
+  if (ev.status === "tentative") bits.push(`<span class="tent">Not yet accepted</span>`);
+  if (ev.calendar) { const src = calendarSource(ev.calendar); if (src.toLowerCase() !== name.toLowerCase()) bits.push("On the " + esc(src) + " calendar"); }
+  const meta = bits.length ? `<div class="t2">${bits.join(" · ")}</div>` : "";
+  return `<div class="calev v-${key}"><span class="bar"></span>${time}<div class="tx"><div class="t1">${esc(ev.title)}</div>${meta}</div><span class="vchip"><i></i>${esc(name)}</span></div>`;
+}
+function calendarSection() {
+  const c = doc("hq-calendar");
+  const dated = (c.days || []).map(d => d && d.date).filter(d => /^\d{4}-\d{2}-\d{2}$/.test(d || "")).sort();
+  const hasWeek = /^\d{4}-\d{2}-\d{2}$/.test(c.weekOf || "");
+  const start = hasWeek ? c.weekOf : dated.length ? weekMondayIso(dated[0]) : weekMondayIso(TODAY);
+  const by = {}; (c.days || []).forEach(d => { if (d && d.date) by[d.date] = Array.isArray(d.events) ? d.events : []; });
+  let html = "";
+  for (let i = 0; i < 7; i++) {
+    const date = iso(addDays(parse(start), i)), d = parse(date);
+    const cls = "calday" + (date === TODAY ? " today" : "") + (date < TODAY ? " past" : "");
+    const head = `<div class="calhd"><div><b class="dn">${DOW[d.getDay()]}</b><span class="dd">${d.getDate()} ${MONTHS[d.getMonth()].slice(0, 3)}</span></div>${date === TODAY ? `<span class="state s1">Today</span>` : ""}</div>`;
+    const evs = (by[date] || []).slice().sort((a, b) => (a.allDay || !a.start ? "" : a.start).localeCompare(b.allDay || !b.start ? "" : b.start));
+    html += `<div class="${cls}">${head}${evs.length ? evs.map(calendarEvent).join("") : `<div class="calempty">Nothing scheduled</div>`}</div>`;
+  }
+  const saved = hasWeek || dated.length > 0;
+  const stale = saved && start < weekMondayIso(TODAY);
+  const note = !saved ? `<div class="note">Nothing saved yet. Tap Update and paste this week's digest.</div>` : stale ? `<div class="note">This is an older week. Tap Update to replace it.</div>` : "";
+  return `<div class="sec"><h2>This week's calendar</h2><a data-act="calpaste">Update</a></div><div class="card cal">${html}</div>${note}`;
+}
+
 const VIEWS = {};
 VIEWS.home = function () {
   const h = NOW.getHours(), greet = h < 12 ? "Good morning" : h < 20 ? "Good afternoon" : "Good evening";
@@ -587,6 +719,7 @@ VIEWS.home = function () {
   <div class="sec"><h2>Key things</h2><a data-act="plan">${keys ? "Edit" : DOW[NOW.getDay()].slice(0, 3) + " " + NOW.getDate() + " " + MONTHS[NOW.getMonth()].slice(0, 3)}</a></div>
   <div class="card keys">${keyHtml}</div>
   ${today ? `<div class="sec"><h2>Today</h2></div><div class="card">${today}</div>` : ""}
+  ${calendarSection()}
   <div class="sec"><h2>If there's time</h2><a>${extra.length || ""}</a></div>
   <div class="card">${extraHtml}</div>
   <div class="sec"><h2>This week</h2><a data-act="tab" data-v="tasks">See all</a></div>
@@ -1049,6 +1182,16 @@ const ACT = {
       v => { v.exp = v.exp || null; if (id) Object.assign(x, v); else l.push(Object.assign({ id: uid() }, v)); save("hq-members"); }, id ? () => { l.splice(l.indexOf(x), 1); save("hq-members"); } : null); },
   copy: el => { const v = el.dataset.v; (navigator.clipboard ? navigator.clipboard.writeText(v) : Promise.reject()).then(() => toast("Copied " + v), () => toast(v)); },
   import: () => $("#file").click(),
+  calpaste: () => openSheet(`<h3>Update this week's calendar</h3>
+    <div class="note" style="margin:0 4px 12px">Paste the week's JSON. This replaces only the calendar. Everything else stays as it is. weekOf is the Monday. Each event needs a title, a time (or allDay) and a venture: arowana, tfw, business or personal.</div>
+    <form id="f"><textarea class="inp" name="json" spellcheck="false" aria-label="Calendar JSON"></textarea>
+    <button class="btn" type="submit">Save calendar</button></form>
+    <div class="note">A morning job can overwrite the same hq-calendar document. Import data file also loads a backup that contains that section.</div>`, sh => {
+    sh.querySelector("textarea").placeholder = '{ "weekOf": "2026-01-05", "days": [ { "date": "2026-01-05", "events": [ { "title": "Weekly meeting", "start": "11:00", "end": "12:30", "venture": "arowana" } ] } ] }';
+    setTimeout(() => sh.querySelector("textarea").focus(), 280);
+    sh.querySelector("#f").onsubmit = ev => { ev.preventDefault(); const parsed = parseCalendar(ev.target.json.value); if (parsed.error) { toast(parsed.error); return; }
+      D["hq-calendar"] = parsed.doc; save("hq-calendar"); closeSheet(); render(); toast("Calendar saved"); };
+  }),
   restore: () => restoreSheet(),
   export: () => { const blob = new Blob([JSON.stringify({ _rubyshq: 1, docs: Object.assign(Object.fromEntries(Object.keys(BLANK).map(k => [k, doc(k)])), Object.fromEntries(Object.keys(D).filter(k => k.startsWith("hq-img-")).map(k => [k, D[k]]))) }, null, 1)], { type: "application/json" });
     const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "rubys-hq-backup-" + TODAY + ".json"; a.click(); },
@@ -1077,14 +1220,15 @@ $("#file").addEventListener("change", async e => {
       d.items.forEach(it => { const dup = cur.items.some(x => (x.name || x.t || "").toLowerCase() === (it.name || it.t || "").toLowerCase() && x.d === it.d && x.m === it.m); if (!dup) { cur.items.push(it); n++; } }); save(name); });
     render(); toast(n ? "Added " + n : "Nothing new to add"); return; }
   const names = Object.keys(j.docs).filter(k => BLANK[k] || k.startsWith("hq-img-"));
-  const LABEL = { "hq-tasks": "Tasks", "hq-money": "Money (accounts, debts, fixed costs)", "hq-growth": "Growth (goals, books, courses)", "hq-wish": "Wishlist", "hq-members": "Memberships", "hq-people": "Birthdays", "hq-events": "Meetings & events", "hq-charlotte": "Charlotte" };
+  const LABEL = { "hq-tasks": "Tasks", "hq-money": "Money (accounts, debts, fixed costs)", "hq-growth": "Growth (goals, books, courses)", "hq-wish": "Wishlist", "hq-members": "Memberships", "hq-people": "Birthdays", "hq-events": "Meetings & events", "hq-charlotte": "Charlotte", "hq-calendar": "This week's calendar" };
   const main = names.filter(n => LABEL[n]), imgs = names.filter(n => n.startsWith("hq-img-"));
   openSheet(`<h3>What should I load?</h3><div class="note" style="margin:0 4px 12px">Ticked sections are replaced by the file. Sections that are empty right now are ticked for you.</div>
     <div class="card">${main.map(n => { const empty = itemCount(doc(n)) === 0; return `<label class="row" style="cursor:pointer"><input type="checkbox" data-n="${n}" ${empty ? "checked" : ""} style="width:22px;height:22px;accent-color:var(--blue)"><div class="tx"><div class="t1">${LABEL[n]}</div><div class="t2">${empty ? "Empty now" : itemCount(doc(n)) + " items now"} · ${itemCount(j.docs[n])} in the file</div></div></label>`; }).join("")}</div>
     <button class="btn" id="go">Load ticked sections</button><button class="btn ghost" id="no">Cancel</button>`, sh => {
     sh.querySelector("#no").onclick = closeSheet;
     sh.querySelector("#go").onclick = () => { const pick = [...sh.querySelectorAll("input[data-n]:checked")].map(i => i.dataset.n);
-      pick.concat(imgs.filter(n => !(D[n] && D[n].d))).forEach(n => { D[n] = j.docs[n]; save(n); }); closeSheet(); render(); toast(pick.length ? "Loaded " + pick.length + " section" + (pick.length > 1 ? "s" : "") : "Nothing loaded"); };
+      if (pick.includes("hq-calendar")) { const parsed = calendarFromObject(j.docs["hq-calendar"]); if (parsed.error) { toast(parsed.error); return; } D["hq-calendar"] = parsed.doc; save("hq-calendar"); }
+      pick.filter(n => n !== "hq-calendar").concat(imgs.filter(n => !(D[n] && D[n].d))).forEach(n => { D[n] = j.docs[n]; save(n); }); closeSheet(); render(); toast(pick.length ? "Loaded " + pick.length + " section" + (pick.length > 1 ? "s" : "") : "Nothing loaded"); };
   });
 });
 
@@ -1112,7 +1256,10 @@ async function start() {
 // Demo mode for previews only: index.html?demo loads a local file without signing in.
 if (location.search.includes("demo")) {
   USER = { id: "demo", email: "demo@preview" };
-  fetch(new URLSearchParams(location.search).get("demo") || "demo.json").then(r => r.json()).then(j => { Object.assign(D, j.docs); pulledOnce = true; flush = async () => {}; $("#login").classList.add("hidden"); $("#app").classList.remove("hidden"); $("#tab").classList.remove("hidden"); render(); }).catch(() => {});
+  const showDemo = () => { pulledOnce = true; flush = async () => {}; $("#login").classList.add("hidden"); $("#app").classList.remove("hidden"); $("#tab").classList.remove("hidden"); render(); };
+  const demoName = new URLSearchParams(location.search).get("demo");
+  if (demoName) fetch(demoName).then(r => { if (!r.ok) throw new Error("demo"); return r.json(); }).then(j => { if (j && j.docs) Object.assign(D, j.docs); showDemo(); }).catch(showDemo);
+  else showDemo();
 } else start();
 if ("serviceWorker" in navigator && !location.search.includes("demo")) {
   navigator.serviceWorker.register("sw.js", { updateViaCache: "none" }).then(reg => {
